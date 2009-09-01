@@ -1,0 +1,49 @@
+                                  
+                                  Spectrotune
+
+Spectrotune is a Processing application (http://www.processing.org) which scans a
+polyphonic audio source like a wav or mp3 file, performs pitch detection and
+outputs to MIDI.
+
+Spectrotune offers adjustable options to help improve pitch detection, including:
+
+  * Pitch Class Profiling (PCP) 
+  * FFT bin distance Weighting
+  * FFT Envelopes
+  * FFT Equalization
+  * Adjustable noise smoothing
+  * Adjustable peak threshold 
+  * Octave toggles
+
+Install:
+
+  * Install processing (http://www.processing.org)
+  
+  * Install rwmidi (http://ruinwesen.com/support-files/rwmidi-0.1c.zip) 
+
+  * Clone Spectrotune and place inside your Processing Sketchbook directory
+  
+    cd ~/Documents/Processing (this is where I keep mine)
+    git clone git://github.com/corbanbrook/spectrotune.gi
+    
+  * Make sure your operating systems MIDI interface is configured properly.
+
+Usage:
+
+  * Open Midi enabled sequencer software, ie Reason, Cubase, Fruityloops, etc.
+
+  * Open processing
+  
+  * Edit the line of spectrotune.pde that specifies the audioFile you wish to open
+
+  * Run
+
+  If you are using a midi enabled sequencer software you should be able to record
+  the input and pass on to any soft synth, or hardware synth.
+
+
+@corban                                                    weare.buildingsky.net
+________________________________________________________________________________
+
+       Copyright (c) 2009 Corban Brook, released under the MIT license
+                                                                                  
