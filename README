@@ -14,6 +14,7 @@ Spectrotune offers adjustable options to help improve pitch detection, including
   * Adjustable noise smoothing
   * Adjustable peak threshold 
   * Octave toggles
+  * MIDI octave channel segmenting
 
 Install:
 
@@ -21,10 +22,12 @@ Install:
   
   * Install rwmidi (http://ruinwesen.com/support-files/rwmidi-0.1c.zip) 
 
+  * Install ControlP5 (http://www.sojamo.de/libraries/controlP5/)
+
   * Clone Spectrotune and place inside your Processing Sketchbook directory
   
     cd ~/Documents/Processing (this is where I keep mine)
-    git clone git://github.com/corbanbrook/spectrotune.gi
+    git clone git://github.com/corbanbrook/spectrotune.git
     
   * Make sure your operating systems MIDI interface is configured properly.
 
@@ -40,6 +43,7 @@ Usage:
 
   If you are using a midi enabled sequencer software you should be able to record
   the input and pass on to any soft synth, or hardware synth.
+
 
 
 @corban                                                    weare.buildingsky.net

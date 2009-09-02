@@ -32,53 +32,7 @@ void keyPressed() {
       }
       break;
     
-    case 'u': // turn uniform on
-      WEIGHT_TYPE = UNIFORM;
-      UNIFORM_TOGGLE = true;
-      DISCRETE_TOGGLE = false;
-      LINEAR_TOGGLE = false;
-      QUADRATIC_TOGGLE = false;
-      EXPONENTIAL_TOGGLE = false;      
-      break;
-    
-    case 'd': // turn discrete on
-      WEIGHT_TYPE = DISCRETE;
-      UNIFORM_TOGGLE = false;
-      DISCRETE_TOGGLE = true;
-      LINEAR_TOGGLE = false;
-      QUADRATIC_TOGGLE = false;
-      EXPONENTIAL_TOGGLE = false;      
-      break;
-      
-    case 'l': // turn linear on
-      WEIGHT_TYPE = LINEAR;
-      UNIFORM_TOGGLE = false;
-      DISCRETE_TOGGLE = false;
-      LINEAR_TOGGLE = true;
-      QUADRATIC_TOGGLE = false;
-      EXPONENTIAL_TOGGLE = false;      
-      break;
-      
-    case 'q': // turn quadratic on
-      WEIGHT_TYPE = QUADRATIC;
-      UNIFORM_TOGGLE = false;
-      DISCRETE_TOGGLE = false;
-      LINEAR_TOGGLE = false;
-      QUADRATIC_TOGGLE = true;
-      EXPONENTIAL_TOGGLE = false;      
-      break;
-      
-    case 'x': // turn exponential on
-      WEIGHT_TYPE = EXPONENTIAL;
-      UNIFORM_TOGGLE = false;
-      DISCRETE_TOGGLE = false;
-      LINEAR_TOGGLE = false;
-      QUADRATIC_TOGGLE = false;
-      EXPONENTIAL_TOGGLE = true;      
-      break;
-    
-
-      
+    // Octave Toggles
     case '0':
       OCTAVE_TOGGLE[0] = !OCTAVE_TOGGLE[0];
       break;
@@ -132,4 +86,65 @@ void keyPressed() {
   }
 }
 
+// ControlP5 events
+void controlEvent(ControlEvent event) {
+  switch(event.controller().id()) {
+    case(1): 
+      
+      break;
+    case(9):
+      PEAK_THRESHOLD = (int)(event.controller().value());
+      break;
+    
+  }
+}
+
+void radioWeight(int type) {
+  WEIGHT_TYPE = type;
+}
+
+void togglePCP(boolean flag) {
+  PCP_TOGGLE = flag;
+}
+
+void oct0(int channel) {
+  if (channel > 0) {
+    OCTAVE_CHANNEL[0] = channel -1;
+  }
+}
+void oct1(int channel) {
+  if (channel > 0) {
+    OCTAVE_CHANNEL[1] = channel -1;
+  }
+}
+void oct2(int channel) {
+  if (channel > 0) {
+    OCTAVE_CHANNEL[2] = channel -1;
+  }
+}
+void oct3(int channel) {
+  if (channel > 0) {
+    OCTAVE_CHANNEL[3] = channel -1;
+  }
+}
+void oct4(int channel) {
+  if (channel > 0) {
+    OCTAVE_CHANNEL[4] = channel -1;
+  }
+}
+void oct5(int channel) {
+  if (channel > 0) {
+    OCTAVE_CHANNEL[5] = channel -1;
+  }
+}
+void oct6(int channel) {
+  if (channel > 0) {
+    OCTAVE_CHANNEL[6] = channel -1;
+  }
+}
+void oct7(int channel) {
+  if (channel > 0) {
+    OCTAVE_CHANNEL[7] = channel -1;
+  }
+}
 

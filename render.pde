@@ -64,15 +64,15 @@ void render() {
       text(semitones[semitone] + "" + octave, 24, height - ((k - keyboardStart) * keyHeight + keyHeight + 2));
       
       if ( frameNumber > 0 && !pitch[frameNumber-1][k] ) {
-        midiOut.sendNoteOn(0, k, 90);
+        midiOut.sendNoteOn(OCTAVE_CHANNEL[octave], k, 90);
       } else if ( frameNumber == 0 && pitch[0][k] ) {
-        midiOut.sendNoteOn(0, k, 90);
+        midiOut.sendNoteOn(OCTAVE_CHANNEL[octave], k, 90);
       }
     }
     
     for ( int p = keyboardStart; p < keyboardEnd; p ++ ) {
       if ( frameNumber > 0 && !pitch[frameNumber][p] && pitch[frameNumber -1][p] ) { // was on now its not
-        midiOut.sendNoteOff(0, p, 90);
+        //midiOut.sendNoteOff(0, p, 90);
       }
     }
   }
@@ -94,29 +94,10 @@ void render() {
   }
   textSize(10);
   
-  // Render progress bar
+  // Update Progress bar
   float percentComplete = frameNumber / (float)hFrames * 100;
-  fill(30);
-  rect(width - 130, height - 20, (120 * percentComplete / 100) + width - 130, height - 10);
-  fill(80);
-  text(nf(round(percentComplete), 2) + "%", width - 30, height - 12);
-  
-  // Render switch labels
-  switchLabel(PCP_TOGGLE, "PITCH CLASS PROFILE", 1);
-  switchLabel(EQUALIZER_TOGGLE, "EQUALIZE", 4);
-  switchLabel(SMOOTH_TOGGLE, "SMOOTHING", 5);
-  switchLabel(ENVELOPE_TOGGLE, "ENVELOPE", 6);
-  
-  // Render switch labels for FFT bin weighting
-  switchLabel(UNIFORM_TOGGLE, "UNIFORM", 8);
-  switchLabel(DISCRETE_TOGGLE, "DISCRETE", 9);
-  switchLabel(LINEAR_TOGGLE, "LINEAR", 10);
-  switchLabel(QUADRATIC_TOGGLE, "QUADRATIC", 11); 
-  switchLabel(EXPONENTIAL_TOGGLE, "XPONENTIAL", 12);
-  
-  // Render value labels for threshold and smoothing
-  valLabel(PEAK_THRESHOLD, "THRESHOLD", 14);
-  valLabel(SMOOTH_POINTS, "SMOOTHING", 15);
+  progressSlider.setValue(percentComplete);
+  progressSlider.setValueLabel(nf(round(percentComplete), 2) + "%");
   
   // Log FPS and % complete
   if (frameNumber % 100 == 0) {
@@ -127,7 +108,10 @@ void render() {
     println("spectrum analysis complete.");
     exit();
   }
- 
+   
+  // Render Buildingsky logo on top of it all
+  image(logo, 25, 254);
+   
   // Save spectrograph to PNG
   //saveFrame(dataPath("frames/frame-"+ nf(frameNumber,6) + ".png"));
   frameNumber++; 
