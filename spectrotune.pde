@@ -4,7 +4,9 @@ import ddf.minim.analysis.*;
 import rwmidi.*;
 import controlP5.*;
 
-String audioFile = "sanitarium.wav";
+String[] files;
+String audioFile = "kraftwerk.wav";
+//String audioFile = "testchords.wav";
 
 Minim minim;
 AudioSample audio;
@@ -20,6 +22,7 @@ int frameNumber = 0;
 
 int bufferSize = 16384; // needs to be high for fft accuracy at lower octaves
 //int bufferSize = 8192;
+//int bufferSize = 512;
 int fftSize = bufferSize/2;
 
 int PEAK_THRESHOLD = 75;
@@ -50,10 +53,17 @@ boolean[][] pitch;
 float[][] level;
 float[][] pcp;
 
+int[] fftBinStart = new int[8];
+int[] fftBinEnd = new int[8];
+
+float[] scaleProfile = new float[12];
+
 
 // Toggles
+boolean SCALE_LOCK_TOGGLE = true;
 boolean PCP_TOGGLE = true;
 boolean EQUALIZER_TOGGLE = false;
+boolean HARMONICS_TOGGLE = true;
 boolean SMOOTH_TOGGLE = true;
 //int SMOOTH_TYPE = FFT.TRIANGLE;
 int SMOOTH_POINTS = 3;
@@ -66,6 +76,8 @@ boolean DISCRETE_TOGGLE = false;
 boolean LINEAR_TOGGLE = false;
 boolean QUADRATIC_TOGGLE = false;
 boolean EXPONENTIAL_TOGGLE = false;
+
+boolean PLAYING = true;
 
 boolean[] OCTAVE_TOGGLE = {false, true, true, true, true, true, true, true};
 int[] OCTAVE_CHANNEL = {0,0,0,0,0,0,0,0}; // set all octaves to channel 0 (0-indexed channel 1)
@@ -81,19 +93,19 @@ void setup() {
   size(510, 288, OPENGL);
   frameRate(framesPerSecond); // lock framerate
   
-  // Create MIDI output interface
+  // Create MIDI output interface - select the first found device by default
   midiOut = RWMidi.getOutputDevices()[0].createOutput();
   
   // Initialize Minim
   minim = new Minim(this);
   
-  audio = minim.loadSample(dataPath(audioFile), bufferSize);
+  audio = minim.loadSample(sketchPath + "/music/" + audioFile, bufferSize);
   samples = audio.getChannel(BufferedAudio.LEFT);
   // lowering the sampling rate increases FFT accuracy. but introduces aliasing into the signal since its now below the Nyquist freq. 
   //audio.sampleRate(audio.sampleRate()/4, true);
   
   fft = new FFT(bufferSize, audio.sampleRate());
-  //fft.window(FFT.HANN);
+  fft.window(FFT.HAMMING);
   //fft.smooth(SMOOTH_TYPE, SMOOTH_POINTS);
   
   hFrames = int(audio.length() / 1000.0 * framesPerSecond);
@@ -114,56 +126,117 @@ void setup() {
   spectrographHeight = 1024; // or fftSize
   spectrograph = createImage(spectrographWidth, spectrographHeight, RGB);
 
+  // Logo UI Images
   bg = loadImage("background.png");
   whiteKey = loadImage("whitekey.png");
   blackKey = loadImage("blackkey.png");
   octaveBtn = loadImage("octavebutton.png");
   logo = loadImage("buildingsky.png");
   
+  
+  
   // ControlP5 UI
   controlP5 = new ControlP5(this);
   
+  Tab tabDefault = controlP5.addTab("default");
+  Tab tabMIDI = controlP5.addTab("midi");
+  Tab tabFiles = controlP5.addTab("files");
+  tabDefault.setLabel("General");
+    
+  controlP5.addTextlabel("labelGeneral", "GENERAL", 380, 10).moveTo("default");
+  
   // Pitch class profile toggle
-  Toggle togglePCP = controlP5.addToggle("togglePCP", true, 380,5, 10,10);
+  Toggle togglePCP = controlP5.addToggle("togglePCP", true, 380, 30, 10,10);
   togglePCP.setLabel("Pitch Class Profile");
   togglePCP.setColorForeground(0x8000ffc8);
   togglePCP.setColorActive(0xff00ffc8);
   
+   // Pitch class profile toggle
+  Toggle toggleScaleLock = controlP5.addToggle("toggleScaleLock", true, 380,60, 10,10);
+  toggleScaleLock.setLabel("Scale Lock");
+  toggleScaleLock.setColorForeground(0x8000ffc8);
+  toggleScaleLock.setColorActive(0xff00ffc8);
+  
+  Toggle toggleHarmonics = controlP5.addToggle("toggleHarmonics", true, 380, 90, 10, 10);
+  toggleHarmonics.setLabel("Harmonics Filter");
+  toggleHarmonics.setColorForeground(0x9000ffc8);
+  toggleHarmonics.setColorActive(0xff00ffc8);
+  
   // FFT bin distance weighting radios
-  controlP5.addTextlabel("labelWeight", "FFT WEIGHT", 380, 70);
-  Radio radioWeight = controlP5.addRadio("radioWeight", 380, 80);
+  controlP5.addTextlabel("labelWeight", "FFT WEIGHT", 380, 130);
+  Radio radioWeight = controlP5.addRadio("radioWeight", 380, 150);
   radioWeight.add("UNIFORM", UNIFORM); // default
   radioWeight.add("DISCRETE", DISCRETE);
   radioWeight.add("LINERAR", LINEAR);
   radioWeight.add("QUADRATIC", QUADRATIC);
   radioWeight.add("EXPONENTIAL", EXPONENTIAL);
-  
+    
   // Peak detect threshold slider
-  Slider thresholdSlider = controlP5.addSlider("Threshold", 0, 255, PEAK_THRESHOLD, 380, 160, 75, 10);
-  thresholdSlider.setId(9);
+  Slider thresholdSlider = controlP5.addSlider("Threshold", 0, 255, PEAK_THRESHOLD, 380, height - 60, 75, 10);
+  thresholdSlider.setId(1);
   
   // Smoothing points slider
-  Slider smoothingSlider = controlP5.addSlider("Smoothing", 1, 10, SMOOTH_POINTS, 380, 180, 75, 10);
-  smoothingSlider.setId(10);
+  Slider smoothingSlider = controlP5.addSlider("Smoothing", 1, 10, SMOOTH_POINTS, 380, height - 40, 75, 10);
+  smoothingSlider.setId(2);
   
-  controlP5.addTextlabel("labelMIDI", "MIDI CHANNELS", 380, 200);
+  // MIDI Section
+  controlP5.addTextlabel("labelMIDI", "MIDI", 380, 10).moveTo(tabMIDI);
   
-  Numberbox oct0 = controlP5.addNumberbox("oct0", 1, 380, 210, 20, 14);
-  Numberbox oct1 = controlP5.addNumberbox("oct1", 1, 410, 210, 20, 14); 
-  Numberbox oct2 = controlP5.addNumberbox("oct2", 1, 440, 210, 20, 14);
-  Numberbox oct3 = controlP5.addNumberbox("oct3", 1, 470, 210, 20, 14);
+  Radio radioMidiDevice = controlP5.addRadio("radioMidiDevice", 60, 30);
+  for(int i = 0; i < RWMidi.getOutputDevices().length; i++) {
+    radioMidiDevice.add(RWMidi.getOutputDevices()[i] + "", i);
+  }
+  radioMidiDevice.moveTo(tabMIDI);
   
-  Numberbox oct4 = controlP5.addNumberbox("oct4", 1, 380, 240, 20, 14);
-  Numberbox oct5 = controlP5.addNumberbox("oct5", 1, 410, 240, 20, 14); 
-  Numberbox oct6 = controlP5.addNumberbox("oct6", 1, 440, 240, 20, 14);
-  Numberbox oct7 = controlP5.addNumberbox("oct7", 1, 470, 240, 20, 14);
+  Numberbox oct0 = controlP5.addNumberbox("oct0", 1, 380, 30, 20, 14);
+  Numberbox oct1 = controlP5.addNumberbox("oct1", 1, 410, 30, 20, 14); 
+  Numberbox oct2 = controlP5.addNumberbox("oct2", 1, 440, 30, 20, 14);
+  Numberbox oct3 = controlP5.addNumberbox("oct3", 1, 470, 30, 20, 14);
   
-  progressSlider = controlP5.addSlider("Progress", 0, 100, 0, 380, 272, 75, 10);
+  Numberbox oct4 = controlP5.addNumberbox("oct4", 1, 380, 60, 20, 14);
+  Numberbox oct5 = controlP5.addNumberbox("oct5", 1, 410, 60, 20, 14); 
+  Numberbox oct6 = controlP5.addNumberbox("oct6", 1, 440, 60, 20, 14);
+  Numberbox oct7 = controlP5.addNumberbox("oct7", 1, 470, 60, 20, 14);
+  
+  // move MIDI Channels to midi tab
+  oct0.moveTo(tabMIDI);
+  oct1.moveTo(tabMIDI);
+  oct2.moveTo(tabMIDI);
+  oct3.moveTo(tabMIDI);
+  oct4.moveTo(tabMIDI);
+  oct5.moveTo(tabMIDI);
+  oct6.moveTo(tabMIDI);
+  oct7.moveTo(tabMIDI);
+  
+  // Progress bar 
+  progressSlider = controlP5.addSlider("Progress", 0, hFrames, 0, 380, height - 20, 75, 10);
+  progressSlider.setId(3);
+  progressSlider.moveTo("global"); // always show no matter what tab is selected
+    
+  // File list
+  ScrollList listFiles = controlP5.addScrollList("listFiles", 94, 40, 220, 280);  
+  listFiles.moveTo(tabFiles);
+  listFiles.setLabel("Open File");
+  File file = new File(sketchPath + "/music");
+ 
+  if ( file.isDirectory() ) {
+    files = file.list();
+    
+    for (int i = 0; i < files.length; i++) {
+      controlP5.Button b = listFiles.addItem(files[i], i);
+      b.setId(100 + i);
+    }
+  }
+ 
+ 
   
   textFont(createFont("Arial", 10, true));
   
   rectMode(CORNERS);
   smooth();
+  
+  precomputeOctaveRegions();
+  precomputeScale();
 }
 
 void draw() {

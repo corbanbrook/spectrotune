@@ -106,3 +106,77 @@ void normalizePCP() {
     pcp[frameNumber][k] /= pcpMax;
   }
 }
+
+void precomputeOctaveRegions() {
+  for ( int j = 0; j < 8; j++) {
+    fftBinStart[j] = 0;
+    fftBinEnd[j] = 0;
+    for ( int k = 0; k < fftSize; k++) {
+      float freq = k / (float)bufferSize * audio.sampleRate();
+      if ( freq >= octaveLowRange(j) && fftBinStart[j] == 0 ) {
+        fftBinStart[j] = k;
+      } else if ( freq > octaveHighRange(j) && fftBinEnd[j] == 0 ) {
+        fftBinEnd[j] = k;
+        break;
+      }
+    }
+  }
+}
+
+void precomputeScale() {
+  float freqLowRange = octaveLowRange(0);
+  float freqHighRange = octaveHighRange(8);
+  float[] bins = new float[fftSize];
+  
+
+  
+  for ( int i = hFrames/2; i < hFrames; i++ ) {
+    int offset = (int)(i * audio.sampleRate() / framesPerSecond);
+    if ( offset + bufferSize > samples.length ) { println(i + "/" + hFrames + " frames computed."); break; }
+    
+    arraycopy(samples, offset, buffer, 0, bufferSize);
+    fft.forward(buffer);
+    
+    for ( int j = 0; j < 8; j++ ) {
+      float octaveMax = 0;
+      for ( int k = fftBinStart[j]; k < fftBinEnd[j]; k++ ) {
+        float freq = k / (float)bufferSize * audio.sampleRate();
+        if ( octaveMax < fft.getBand(k) ) {
+          octaveMax = fft.getBand(k);
+        }        
+      }
+      for ( int k = fftBinStart[j]; k < fftBinEnd[j]; k++ ) {
+        float freq = k / (float)bufferSize * audio.sampleRate();
+        scaleProfile[freqToPitch(freq) % 12] += (fft.getBand(k) / octaveMax);
+      }
+    }
+    /*
+    for ( int k = 0; k < fftSize; k++ ) {
+              float freq = k / (float)bufferSize * audio.sampleRate();
+        scaleProfile[freqToPitch(freq) % 12] += (fft.getBand(k));
+    }
+    */
+  }
+  
+  // Normalize scaleProfile
+  float scaleMax = max(scaleProfile);
+  for ( int i = 0; i < 12; i++ ) {
+    scaleProfile[i] /= scaleMax;
+  }
+  
+  float[] weakest = sort(scaleProfile);
+  for ( int i = 0; i < 12; i++ ) {
+    boolean inScale = true;
+    for ( int j = 0; j < 5; j++ ) {
+      if (scaleProfile[i] == weakest[j]) {
+        inScale = false;
+        break;
+      }
+    }
+    if ( inScale ) {
+      scaleProfile[i] = 1.5;
+      println(semitones[i]);
+    }
+  }  
+  println("Done precomputing Scale");
+}

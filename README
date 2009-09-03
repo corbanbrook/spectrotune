@@ -1,7 +1,7 @@
                                   
                                   Spectrotune
 
-Spectrotune is a Processing application (http://www.processing.org) which scans a
+Spectrotune is a Processing application ( http://www.processing.org ) which scans a
 polyphonic audio source like a wav or mp3 file, performs pitch detection and
 outputs to MIDI.
 
@@ -18,11 +18,11 @@ Spectrotune offers adjustable options to help improve pitch detection, including
 
 Install:
 
-  * Install processing (http://www.processing.org)
+  * Install processing ( http://www.processing.org )
   
-  * Install rwmidi (http://ruinwesen.com/support-files/rwmidi-0.1c.zip) 
+  * Install rwmidi ( http://ruinwesen.com/support-files/rwmidi-0.1c.zip ) 
 
-  * Install ControlP5 (http://www.sojamo.de/libraries/controlP5/)
+  * Install ControlP5 ( http://www.sojamo.de/libraries/controlP5/ )
 
   * Clone Spectrotune and place inside your Processing Sketchbook directory
   

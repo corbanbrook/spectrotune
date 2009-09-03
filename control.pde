@@ -1,5 +1,9 @@
 void keyPressed() {
   switch(key) {
+    case ' ': // save spectrograph and quit
+      PLAYING = !PLAYING;
+      println("pause");
+      break;
     case 's': // save spectrograph and quit
       saveSpectrograph();
       exit();
@@ -89,13 +93,44 @@ void keyPressed() {
 // ControlP5 events
 void controlEvent(ControlEvent event) {
   switch(event.controller().id()) {
-    case(1): 
-      
-      break;
-    case(9):
+    case(1):
       PEAK_THRESHOLD = (int)(event.controller().value());
       break;
+    case(2):
+      break;
+    case(3): // Progress Slider
+      PLAYING = true;
+      frameNumber = (int)(event.controller().value());
+      break;
+  }
+  
+  // File List IDs
+  if ( event.controller().id() >= 100 ) {
+    audioFile = files[(int)event.controller().value()];
     
+    audio = minim.loadSample(sketchPath + "/music/" + audioFile, bufferSize);
+    samples = audio.getChannel(BufferedAudio.LEFT);
+    
+    fft = new FFT(bufferSize, audio.sampleRate());
+    fft.window(FFT.HAMMING);
+  
+    hFrames = int(audio.length() / 1000.0 * framesPerSecond);
+  
+    println("Audio source: " + audioFile + " " + audio.length() / 1000 + " seconds (" + hFrames + " frames)");
+    println("Time size: " + bufferSize + " bytes / Sample rate: " + audio.sampleRate() / 1000.0 + "kHz");
+    println("FFT bandwidth: " + (2.0 / bufferSize) * ((float)audio.sampleRate() / 2.0) + "Hz");
+  
+    // Setup Arrays
+    spectrum = new float[hFrames][fftSize];
+    peak = new int[hFrames][fftSize];
+    pitch = new boolean[hFrames][128];
+    level = new float[hFrames][128];
+    pcp = new float[hFrames][12];
+    
+    precomputeScale();
+    
+    frameNumber = 0;
+    PLAYING = true;
   }
 }
 
@@ -103,8 +138,20 @@ void radioWeight(int type) {
   WEIGHT_TYPE = type;
 }
 
+void radioMidiDevice(int device) {
+  midiOut = RWMidi.getOutputDevices()[device].createOutput();
+} 
+
 void togglePCP(boolean flag) {
   PCP_TOGGLE = flag;
+}
+
+void toggleScaleLock(boolean flag) {
+  SCALE_LOCK_TOGGLE = flag;
+}
+
+void toggleHarmonics(boolean flag) {
+  HARMONICS_TOGGLE = flag;
 }
 
 void oct0(int channel) {
