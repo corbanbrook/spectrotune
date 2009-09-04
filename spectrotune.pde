@@ -77,7 +77,8 @@ boolean LINEAR_TOGGLE = false;
 boolean QUADRATIC_TOGGLE = false;
 boolean EXPONENTIAL_TOGGLE = false;
 
-boolean PLAYING = true;
+boolean TRACK_LOADED = false;
+boolean PLAYING = false;
 
 boolean[] OCTAVE_TOGGLE = {false, true, true, true, true, true, true, true};
 int[] OCTAVE_CHANNEL = {0,0,0,0,0,0,0,0}; // set all octaves to channel 0 (0-indexed channel 1)
@@ -99,6 +100,7 @@ void setup() {
   // Initialize Minim
   minim = new Minim(this);
   
+  /*
   audio = minim.loadSample(sketchPath + "/music/" + audioFile, bufferSize);
   samples = audio.getChannel(BufferedAudio.LEFT);
   // lowering the sampling rate increases FFT accuracy. but introduces aliasing into the signal since its now below the Nyquist freq. 
@@ -114,18 +116,23 @@ void setup() {
   println("Time size: " + bufferSize + " bytes / Sample rate: " + audio.sampleRate() / 1000.0 + "kHz");
   println("FFT bandwidth: " + (2.0 / bufferSize) * ((float)audio.sampleRate() / 2.0) + "Hz");
   
+  
+  
   // Setup Arrays
   spectrum = new float[hFrames][fftSize];
   peak = new int[hFrames][fftSize];
   pitch = new boolean[hFrames][128];
   level = new float[hFrames][128];
   pcp = new float[hFrames][12];
+  */
 
+  /* DISABLED
   // Create spectrograph image
   spectrographWidth = hFrames;
   spectrographHeight = 1024; // or fftSize
   spectrograph = createImage(spectrographWidth, spectrographHeight, RGB);
-
+  */
+  
   // Logo UI Images
   bg = loadImage("background.png");
   whiteKey = loadImage("whitekey.png");
@@ -133,8 +140,7 @@ void setup() {
   octaveBtn = loadImage("octavebutton.png");
   logo = loadImage("buildingsky.png");
   
-  
-  
+   
   // ControlP5 UI
   controlP5 = new ControlP5(this);
   
@@ -209,7 +215,7 @@ void setup() {
   oct7.moveTo(tabMIDI);
   
   // Progress bar 
-  progressSlider = controlP5.addSlider("Progress", 0, hFrames, 0, 380, height - 20, 75, 10);
+  progressSlider = controlP5.addSlider("Progress", 0, 0, 0, 380, height - 20, 75, 10);
   progressSlider.setId(3);
   progressSlider.moveTo("global"); // always show no matter what tab is selected
     
@@ -229,20 +235,17 @@ void setup() {
   }
  
  
-  
   textFont(createFont("Arial", 10, true));
   
   rectMode(CORNERS);
   smooth();
-  
-  precomputeOctaveRegions();
-  precomputeScale();
 }
 
 void draw() {
-  //view(); // displays a ociliscope
-  analyze();
-  render();
+  if ( TRACK_LOADED && PLAYING ){ // only analyze when playing
+    analyze(); 
+  }
+  render(); // There are still some stuff to render even if the track paused or ended
 }
 
 void stop() {

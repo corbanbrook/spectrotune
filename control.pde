@@ -1,13 +1,18 @@
 void keyPressed() {
   switch(key) {
     case ' ': // save spectrograph and quit
-      PLAYING = !PLAYING;
-      println("pause");
+      if ( TRACK_LOADED ) {
+        PLAYING = !PLAYING;
+        if ( !PLAYING ) {
+          progressSlider.setValueLabel("PAUSED");
+        }
+      }
       break;
-    case 's': // save spectrograph and quit
+    
+    /* case 's': // save spectrograph and quit
       saveSpectrograph();
       exit();
-      break;
+      break; */
     
     case 'e': // turn equalizer on/off
       EQUALIZER_TOGGLE = !EQUALIZER_TOGGLE;
@@ -127,9 +132,14 @@ void controlEvent(ControlEvent event) {
     level = new float[hFrames][128];
     pcp = new float[hFrames][12];
     
+    precomputeOctaveRegions();
     precomputeScale();
     
+    progressSlider.setMax(hFrames);
+    
     frameNumber = 0;
+    
+    TRACK_LOADED = true;
     PLAYING = true;
   }
 }

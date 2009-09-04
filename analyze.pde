@@ -1,7 +1,6 @@
 void analyze() {
   int offset = (int)(frameNumber * audio.sampleRate() / framesPerSecond);
-  if ( offset + bufferSize > samples.length ) {
-    // Audio ended
+  if ( offset + bufferSize > samples.length ) { // Reached the end of the audio track
     PLAYING = false;
   } else {
     arraycopy(samples, offset, buffer, 0, bufferSize);

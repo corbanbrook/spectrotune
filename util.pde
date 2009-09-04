@@ -49,6 +49,7 @@ float binWeight(int type, float x) {
   }
 }
 
+/*
 // Save an image of the spectrograph
 void saveSpectrograph() {
   for ( int x = 0; x < frameNumber; x++ ) {
@@ -74,7 +75,7 @@ void saveSpectrograph() {
     
   spectrograph.save("spectrograph.png");
   println("spectrograph saved.");
-}
+} */
 
 void switchLabel(boolean toggle, String label, int pos) {
   pos *= 12;
