@@ -97,10 +97,10 @@ void render() {
       progressSlider.setValueLabel(nf(round(percentComplete), 2) + "%");
       
       // Log FPS and % complete
-      /*
+      
       if (frameNumber % 100 == 0) {
         println("  " + round(percentComplete) + "% complete (" + round(frameRate) + " fps)");
-      }*/
+      }
       frameNumber++;
     } // end if PLAYING
   } else {

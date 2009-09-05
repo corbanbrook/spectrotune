@@ -4,14 +4,15 @@ import ddf.minim.analysis.*;
 import rwmidi.*;
 import controlP5.*;
 
-String[] files;
-String audioFile = "kraftwerk.wav";
-//String audioFile = "testchords.wav";
+String[] audioFiles;
+String loadedAudioFile;
 
 Minim minim;
 AudioSample audio;
 ControlP5 controlP5;
+
 Slider progressSlider;
+Slider balanceSlider;
 
 FFT fft;
 
@@ -44,8 +45,9 @@ String[] semitones = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#
 boolean[] keyboard = { true, false, true, false, true, true, false, true, false, true, false, true };
 color[] toneColor = { color(0, 200, 50), color(0, 100, 200), color(200, 100, 0), color(255, 0, 100), color(50, 150, 200), color(100, 0, 200), color(0, 255, 50), color(255, 80, 200), color(20, 100, 255), color(50, 200, 150), color(50, 160, 20), color(100, 255, 50) };
 
-float[] samples;
 float[] buffer = new float[bufferSize];
+float[] bufferLeft = new float[bufferSize];
+float[] bufferRight = new float[bufferSize];
 
 float[][] spectrum;
 int[][] peak;
@@ -60,7 +62,7 @@ float[] scaleProfile = new float[12];
 
 
 // Toggles
-boolean SCALE_LOCK_TOGGLE = true;
+boolean SCALE_LOCK_TOGGLE = false;
 boolean PCP_TOGGLE = true;
 boolean EQUALIZER_TOGGLE = false;
 boolean HARMONICS_TOGGLE = true;
@@ -152,33 +154,36 @@ void setup() {
   controlP5.addTextlabel("labelGeneral", "GENERAL", 380, 10).moveTo("default");
   
   // Pitch class profile toggle
-  Toggle togglePCP = controlP5.addToggle("togglePCP", true, 380, 30, 10,10);
+  Toggle togglePCP = controlP5.addToggle("togglePCP", PCP_TOGGLE, 380, 30, 10,10);
   togglePCP.setLabel("Pitch Class Profile");
   togglePCP.setColorForeground(0x8000ffc8);
   togglePCP.setColorActive(0xff00ffc8);
   
    // Pitch class profile toggle
-  Toggle toggleScaleLock = controlP5.addToggle("toggleScaleLock", true, 380,60, 10,10);
+  Toggle toggleScaleLock = controlP5.addToggle("toggleScaleLock", SCALE_LOCK_TOGGLE, 380,60, 10,10);
   toggleScaleLock.setLabel("Scale Lock");
   toggleScaleLock.setColorForeground(0x8000ffc8);
   toggleScaleLock.setColorActive(0xff00ffc8);
   
-  Toggle toggleHarmonics = controlP5.addToggle("toggleHarmonics", true, 380, 90, 10, 10);
+  Toggle toggleHarmonics = controlP5.addToggle("toggleHarmonics", HARMONICS_TOGGLE, 380, 90, 10, 10);
   toggleHarmonics.setLabel("Harmonics Filter");
   toggleHarmonics.setColorForeground(0x9000ffc8);
   toggleHarmonics.setColorActive(0xff00ffc8);
   
   // FFT bin distance weighting radios
-  controlP5.addTextlabel("labelWeight", "FFT WEIGHT", 380, 130);
-  Radio radioWeight = controlP5.addRadio("radioWeight", 380, 150);
+  //controlP5.addTextlabel("labelWeight", "FFT WEIGHT", 380, 130);
+  Radio radioWeight = controlP5.addRadio("radioWeight", 380, 160);
   radioWeight.add("UNIFORM", UNIFORM); // default
   radioWeight.add("DISCRETE", DISCRETE);
   radioWeight.add("LINERAR", LINEAR);
   radioWeight.add("QUADRATIC", QUADRATIC);
   radioWeight.add("EXPONENTIAL", EXPONENTIAL);
+  
+  balanceSlider = controlP5.addSlider("balance", -100, 100, 0, 380, 120, 50, 10);
+  balanceSlider.setValueLabel(" CENTER");
     
   // Peak detect threshold slider
-  Slider thresholdSlider = controlP5.addSlider("Threshold", 0, 255, PEAK_THRESHOLD, 380, height - 60, 75, 10);
+  Slider thresholdSlider = controlP5.addSlider("Threshold", 0, 255, PEAK_THRESHOLD, 380, 140, 75, 10);
   thresholdSlider.setId(1);
   
   // Smoothing points slider
@@ -226,14 +231,13 @@ void setup() {
   File file = new File(sketchPath + "/music");
  
   if ( file.isDirectory() ) {
-    files = file.list();
+    audioFiles = file.list();
     
-    for (int i = 0; i < files.length; i++) {
-      controlP5.Button b = listFiles.addItem(files[i], i);
+    for (int i = 0; i < audioFiles.length; i++) {
+      controlP5.Button b = listFiles.addItem(audioFiles[i], i);
       b.setId(100 + i);
     }
   }
- 
  
   textFont(createFont("Arial", 10, true));
   

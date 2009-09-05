@@ -111,35 +111,8 @@ void controlEvent(ControlEvent event) {
   
   // File List IDs
   if ( event.controller().id() >= 100 ) {
-    audioFile = files[(int)event.controller().value()];
-    
-    audio = minim.loadSample(sketchPath + "/music/" + audioFile, bufferSize);
-    samples = audio.getChannel(BufferedAudio.LEFT);
-    
-    fft = new FFT(bufferSize, audio.sampleRate());
-    fft.window(FFT.HAMMING);
+    openAudioFile(audioFiles[(int)event.controller().value()]);
   
-    hFrames = int(audio.length() / 1000.0 * framesPerSecond);
-  
-    println("Audio source: " + audioFile + " " + audio.length() / 1000 + " seconds (" + hFrames + " frames)");
-    println("Time size: " + bufferSize + " bytes / Sample rate: " + audio.sampleRate() / 1000.0 + "kHz");
-    println("FFT bandwidth: " + (2.0 / bufferSize) * ((float)audio.sampleRate() / 2.0) + "Hz");
-  
-    // Setup Arrays
-    spectrum = new float[hFrames][fftSize];
-    peak = new int[hFrames][fftSize];
-    pitch = new boolean[hFrames][128];
-    level = new float[hFrames][128];
-    pcp = new float[hFrames][12];
-    
-    precomputeOctaveRegions();
-    precomputeScale();
-    
-    progressSlider.setMax(hFrames);
-    
-    frameNumber = 0;
-    
-    TRACK_LOADED = true;
     PLAYING = true;
   }
 }
@@ -204,4 +177,16 @@ void oct7(int channel) {
     OCTAVE_CHANNEL[7] = channel -1;
   }
 }
+
+void balance(int value) {
+  balanceSlider.setValueLabel(value + "%");
+  if ( value == 0 ) {
+    balanceSlider.setValueLabel("  CENTER");
+  } else if ( value < 0 ) {
+    balanceSlider.setValueLabel(value * -1 + "% LEFT");
+  } else if ( value > 0 ) {
+    balanceSlider.setValueLabel(value + "% RIGHT");
+  }
+}
+
 
