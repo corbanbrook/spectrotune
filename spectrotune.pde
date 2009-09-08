@@ -193,12 +193,6 @@ void setup() {
   // MIDI Section
   controlP5.addTextlabel("labelMIDI", "MIDI", 380, 10).moveTo(tabMIDI);
   
-  Radio radioMidiDevice = controlP5.addRadio("radioMidiDevice", 60, 30);
-  for(int i = 0; i < RWMidi.getOutputDevices().length; i++) {
-    radioMidiDevice.add(RWMidi.getOutputDevices()[i] + "", i);
-  }
-  radioMidiDevice.moveTo(tabMIDI);
-  
   Numberbox oct0 = controlP5.addNumberbox("oct0", 1, 380, 30, 20, 14);
   Numberbox oct1 = controlP5.addNumberbox("oct1", 1, 410, 30, 20, 14); 
   Numberbox oct2 = controlP5.addNumberbox("oct2", 1, 440, 30, 20, 14);
@@ -218,6 +212,14 @@ void setup() {
   oct5.moveTo(tabMIDI);
   oct6.moveTo(tabMIDI);
   oct7.moveTo(tabMIDI);
+  
+  Radio radioMidiDevice = controlP5.addRadio("radioMidiDevice", 60, 30);
+  for(int i = 0; i < RWMidi.getOutputDevices().length; i++) {
+    radioMidiDevice.add(RWMidi.getOutputDevices()[i] + "", i);
+  }
+  radioMidiDevice.moveTo(tabMIDI);
+  
+
   
   // Progress bar 
   progressSlider = controlP5.addSlider("Progress", 0, 0, 0, 380, height - 20, 75, 10);
