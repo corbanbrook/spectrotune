@@ -21,19 +21,26 @@ void analyze() {
           buffer[i] = bufferLeft[i] + bufferRight[i];
         }
       }
+      /*for ( int i = bufferSize/2; i < bufferSize; i++ ) {
+        buffer[i] = 0;
+      }*/
     } else {
       arraycopy(audio.getChannel(BufferedAudio.LEFT), offset, buffer, 0, bufferSize); 
     }
     
-    fft.forward(buffer);
+    window.transform(buffer); // add window to buffer
+    
+    fft.forward(buffer); // run fft on the buffer
     
     float[] binDistance = new float[fftSize];
     float[] freq = new float[fftSize];
       
-    boolean peakset = false;
+    
     float freqLowRange = octaveLowRange(0);
     float freqHighRange = octaveHighRange(8);
-      
+    
+    boolean peakset = false;
+    
     for (int k = 0; k < fftSize; k++) {
       freq[k] = k / (float)bufferSize * audio.sampleRate();
       
@@ -44,14 +51,15 @@ void analyze() {
       float closestFreq = pitchToFreq(freqToPitch(freq[k])); // Rounds FFT frequency to closest semitone frequency
       boolean filterFreq = false;
   
+      // Clear arrays that may have been pre populated before rewinding
+      spectrum[frameNumber][k] = 0;
+      level[frameNumber][freqToPitch(freq[k])] = 0;
+      pitch[frameNumber][freqToPitch(freq[k])] = false;
+  
       // Filter out frequncies from disabled octaves    
       for ( int i = 0; i < 8; i ++ ) {
         if ( !OCTAVE_TOGGLE[i] ) {
           if ( closestFreq >= octaveLowRange(i) && closestFreq <= octaveHighRange(i) ) {
-            // clear arrays - if the person seeks back peak and level data will be in framebuffer
-            spectrum[frameNumber][k] = 0;
-            level[frameNumber][freqToPitch(freq[k])] = 0;
-            pitch[frameNumber][freqToPitch(freq[k])] = false;
             filterFreq = true;
           }
         }

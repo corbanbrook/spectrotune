@@ -9,7 +9,9 @@ String loadedAudioFile;
 
 Minim minim;
 AudioSample audio;
+AudioPlayer player;
 ControlP5 controlP5;
+Window window;
 
 Slider progressSlider;
 Slider balanceSlider;
@@ -21,6 +23,7 @@ MidiOutput midiOut;
 float framesPerSecond = 25.0;
 int frameNumber = 0;
 
+//int bufferSize = 32768;
 int bufferSize = 16384; // needs to be high for fft accuracy at lower octaves
 //int bufferSize = 8192;
 //int bufferSize = 512;
@@ -85,6 +88,7 @@ boolean PLAYING = false;
 boolean[] OCTAVE_TOGGLE = {false, true, true, true, true, true, true, true};
 int[] OCTAVE_CHANNEL = {0,0,0,0,0,0,0,0}; // set all octaves to channel 0 (0-indexed channel 1)
 
+public static final int NONE = 0;
 
 public static final int PEAK = 1;
 public static final int VALLEY = 2;
@@ -102,31 +106,7 @@ void setup() {
   // Initialize Minim
   minim = new Minim(this);
   
-  /*
-  audio = minim.loadSample(sketchPath + "/music/" + audioFile, bufferSize);
-  samples = audio.getChannel(BufferedAudio.LEFT);
-  // lowering the sampling rate increases FFT accuracy. but introduces aliasing into the signal since its now below the Nyquist freq. 
-  //audio.sampleRate(audio.sampleRate()/4, true);
-  
-  fft = new FFT(bufferSize, audio.sampleRate());
-  fft.window(FFT.HAMMING);
-  //fft.smooth(SMOOTH_TYPE, SMOOTH_POINTS);
-  
-  hFrames = int(audio.length() / 1000.0 * framesPerSecond);
-  
-  println("Audio source: " + audioFile + " " + audio.length() / 1000 + " seconds (" + hFrames + " frames)");
-  println("Time size: " + bufferSize + " bytes / Sample rate: " + audio.sampleRate() / 1000.0 + "kHz");
-  println("FFT bandwidth: " + (2.0 / bufferSize) * ((float)audio.sampleRate() / 2.0) + "Hz");
-  
-  
-  
-  // Setup Arrays
-  spectrum = new float[hFrames][fftSize];
-  peak = new int[hFrames][fftSize];
-  pitch = new boolean[hFrames][128];
-  level = new float[hFrames][128];
-  pcp = new float[hFrames][12];
-  */
+  window = new Window();
 
   /* DISABLED
   // Create spectrograph image
@@ -147,10 +127,13 @@ void setup() {
   controlP5 = new ControlP5(this);
   
   Tab tabDefault = controlP5.addTab("default");
+  Tab tabWindowing = controlP5.addTab("windowing");
+  Tab tabSmoothing = controlP5.addTab("smoothing");
   Tab tabMIDI = controlP5.addTab("midi");
   Tab tabFiles = controlP5.addTab("files");
-  tabDefault.setLabel("General");
-    
+  
+  // GENERAL TAB
+  tabDefault.setLabel("GENERAL");
   controlP5.addTextlabel("labelGeneral", "GENERAL", 380, 10).moveTo("default");
   
   // Pitch class profile toggle
@@ -190,7 +173,7 @@ void setup() {
   Slider smoothingSlider = controlP5.addSlider("Smoothing", 1, 10, SMOOTH_POINTS, 380, height - 40, 75, 10);
   smoothingSlider.setId(2);
   
-  // MIDI Section
+  // MIDI TAB
   controlP5.addTextlabel("labelMIDI", "MIDI", 380, 10).moveTo(tabMIDI);
   
   Numberbox oct0 = controlP5.addNumberbox("oct0", 1, 380, 30, 20, 14);
@@ -213,21 +196,31 @@ void setup() {
   oct6.moveTo(tabMIDI);
   oct7.moveTo(tabMIDI);
   
-  Radio radioMidiDevice = controlP5.addRadio("radioMidiDevice", 60, 30);
+  Radio radioMidiDevice = controlP5.addRadio("radioMidiDevice", 36, 30);
   for(int i = 0; i < RWMidi.getOutputDevices().length; i++) {
     radioMidiDevice.add(RWMidi.getOutputDevices()[i] + "", i);
   }
   radioMidiDevice.moveTo(tabMIDI);
   
+  // WINDOWING TAB
+  controlP5.addTextlabel("labelWindowing", "WINDOWING", 380, 10).moveTo(tabWindowing);
 
+  Radio radioWindow = controlP5.addRadio("radioWindow", 380, 30);
+  radioWindow.add("RECTANGULAR", Window.RECTANGULAR); // default
+  radioWindow.add("HAMMING", Window.HAMMING);
+  radioWindow.add("HANN", Window.HANN);
+  radioWindow.add("COSINE", Window.COSINE);
+  radioWindow.add("TRIANGULAR", Window.TRIANGULAR);
+  radioWindow.add("BLACKMAN", Window.BLACKMAN);
+  radioWindow.moveTo(tabWindowing);
   
-  // Progress bar 
-  progressSlider = controlP5.addSlider("Progress", 0, 0, 0, 380, height - 20, 75, 10);
-  progressSlider.setId(3);
-  progressSlider.moveTo("global"); // always show no matter what tab is selected
-    
+  controlP5.addTextlabel("labelSmoothing", "SMOOTHING", 380, 10).moveTo(tabSmoothing);
+  
+
+  // FILE TAB -- think about adding sDrop support.. may be better
+
   // File list
-  ScrollList listFiles = controlP5.addScrollList("listFiles", 94, 40, 220, 280);  
+  ScrollList listFiles = controlP5.addScrollList("listFiles", 36, 40, 280, 280);  
   listFiles.moveTo(tabFiles);
   listFiles.setLabel("Open File");
   File file = new File(sketchPath + "/music");
@@ -240,6 +233,14 @@ void setup() {
       b.setId(100 + i);
     }
   }
+  
+  // GLOBAL
+  
+  // Progress bar 
+  progressSlider = controlP5.addSlider("Progress", 0, 0, 0, 380, height - 20, 75, 10);
+  progressSlider.setId(3);
+  progressSlider.moveTo("global"); // always show no matter what tab is selected
+    
  
   textFont(createFont("Arial", 10, true));
   

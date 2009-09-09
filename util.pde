@@ -122,6 +122,7 @@ void precomputeOctaveRegions() {
       }
     }
   }
+  println("Start: " + fftBinStart[0] + " End: " + fftBinEnd[7] + " (" + fftSize + " total)");
 }
 
 void precomputeScale() {
@@ -188,6 +189,8 @@ void precomputeScale() {
 
 void openAudioFile(String audioFile) {
     audio = minim.loadSample(sketchPath + "/music/" + audioFile, bufferSize);
+    //player = minim.loadFile(sketchPath + "/music/" + audioFile, bufferSize);
+    //player.play();
     
     hFrames = int(audio.length() / 1000.0 * framesPerSecond);
     println("\nAudio source: " + audioFile + " " + audio.length() / 1000 + " seconds (" + hFrames + " frames)");
@@ -201,8 +204,8 @@ void openAudioFile(String audioFile) {
     }
     
     fft = new FFT(bufferSize, audio.sampleRate());
-    fft.window(FFT.HAMMING);
-  
+    //fft.window(FFT.HAMMING);
+    
     // Setup Arrays
     spectrum = new float[hFrames][fftSize];
     peak = new int[hFrames][fftSize];
@@ -211,7 +214,7 @@ void openAudioFile(String audioFile) {
     pcp = new float[hFrames][12];
     
     precomputeOctaveRegions();
-    precomputeScale();
+    //precomputeScale();
     
     progressSlider.setMax(hFrames);
     

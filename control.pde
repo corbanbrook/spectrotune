@@ -123,7 +123,11 @@ void radioWeight(int type) {
 
 void radioMidiDevice(int device) {
   midiOut = RWMidi.getOutputDevices()[device].createOutput();
-} 
+}
+
+void radioWindow(int mode) {
+  window.setMode(mode);
+}
 
 void togglePCP(boolean flag) {
   PCP_TOGGLE = flag;
