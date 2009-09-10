@@ -12,6 +12,7 @@ AudioSample audio;
 AudioPlayer player;
 ControlP5 controlP5;
 Window window;
+Smooth smoother;
 
 Slider progressSlider;
 Slider balanceSlider;
@@ -63,6 +64,8 @@ int[] fftBinEnd = new int[8];
 
 float[] scaleProfile = new float[12];
 
+float linearEQIntercept = 1f; // default no eq boost
+float linearEQSlope = 0f; // default no slope boost
 
 // Toggles
 boolean SCALE_LOCK_TOGGLE = false;
@@ -72,9 +75,6 @@ boolean HARMONICS_TOGGLE = true;
 boolean SMOOTH_TOGGLE = true;
 //int SMOOTH_TYPE = FFT.TRIANGLE;
 int SMOOTH_POINTS = 3;
-
-boolean ENVELOPE_TOGGLE = true;
-float ENVELOPE_CURVE = 2.0;
 
 boolean UNIFORM_TOGGLE = true;
 boolean DISCRETE_TOGGLE = false;
@@ -107,6 +107,7 @@ void setup() {
   minim = new Minim(this);
   
   window = new Window();
+  smoother = new Smooth();
 
   /* DISABLED
   // Create spectrograph image
@@ -114,6 +115,10 @@ void setup() {
   spectrographHeight = 1024; // or fftSize
   spectrograph = createImage(spectrographWidth, spectrographHeight, RGB);
   */
+  
+  // Equalizer settings. Need a tab for this.
+  linearEQIntercept = 0.9f;
+  linearEQSlope = 0.01f;
   
   // Logo UI Images
   bg = loadImage("background.png");
@@ -216,6 +221,12 @@ void setup() {
   
   controlP5.addTextlabel("labelSmoothing", "SMOOTHING", 380, 10).moveTo(tabSmoothing);
   
+  Radio radioSmooth = controlP5.addRadio("radioSmooth", 380, 30);
+  radioSmooth.add("NONE", Smooth.NONE);
+  radioSmooth.add("RECTANGLE", Smooth.RECTANGLE); // default
+  radioSmooth.add("TRIANGLE", Smooth.TRIANGLE);
+  radioSmooth.add("AJACENT AVERAGE", Smooth.ADJAVG);
+  radioSmooth.moveTo(tabSmoothing);
 
   // FILE TAB -- think about adding sDrop support.. may be better
 

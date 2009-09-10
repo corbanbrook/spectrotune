@@ -32,6 +32,8 @@ void analyze() {
     
     fft.forward(buffer); // run fft on the buffer
     
+    smoother.apply(fft); // run the smoother on the fft spectra
+    
     float[] binDistance = new float[fftSize];
     float[] freq = new float[fftSize];
       
@@ -68,7 +70,9 @@ void analyze() {
       // Set spectrum 
       if ( !filterFreq ) {
         binDistance[k] = 2 * abs((12 * log(freq[k]/440.0) / log(2)) - (12 * log(closestFreq/440.0) / log(2)));
-        spectrum[frameNumber][k] = fft.getBand(k) * binWeight(WEIGHT_TYPE, binDistance[k]);
+        float linearEQ = linearEQIntercept + k * linearEQSlope;
+        
+        spectrum[frameNumber][k] = fft.getBand(k) * binWeight(WEIGHT_TYPE, binDistance[k]) * linearEQ;
       
         // Sum PCP bins
         pcp[frameNumber][freqToPitch(freq[k]) % 12] += pow(fft.getBand(k), 2) * binWeight(WEIGHT_TYPE, binDistance[k]);

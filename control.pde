@@ -22,24 +22,6 @@ void keyPressed() {
     case 'p': // turn PCP on/off
       PCP_TOGGLE = !PCP_TOGGLE;
       break;
-      
-    case 'o': // turn smoothing on/off
-      SMOOTH_TOGGLE = !SMOOTH_TOGGLE;
-      if ( SMOOTH_TOGGLE ) {
-        //fft.smooth(SMOOTH_TYPE, SMOOTH_POINTS);
-      } else {
-        //fft.noSmooth();
-      }
-      break;
-    
-    case 'v': // turn envelope on/off
-      ENVELOPE_TOGGLE = !ENVELOPE_TOGGLE;
-      if ( ENVELOPE_TOGGLE ) { 
-        //fft.envelope(ENVELOPE_CURVE);
-      } else {
-        //fft.noEnvelope();
-      }
-      break;
     
     // Octave Toggles
     case '0':
@@ -127,6 +109,10 @@ void radioMidiDevice(int device) {
 
 void radioWindow(int mode) {
   window.setMode(mode);
+}
+
+void radioSmooth(int mode) {
+  smoother.setMode(mode, SMOOTH_POINTS);
 }
 
 void togglePCP(boolean flag) {
