@@ -2,21 +2,48 @@
                                   Spectrotune
 
 Spectrotune is a Processing application ( http://www.processing.org ) which scans a
-polyphonic audio source like a wav or mp3 file, performs pitch detection and
+polyphonic audio source (in wav format), performs pitch detection and
 outputs to MIDI.
 
 Spectrotune offers adjustable options to help improve pitch detection, including:
 
-  * Pitch Class Profiling (PCP) 
-  * FFT bin distance Weighting
-  * FFT Envelopes
-  * FFT Equalization
-  * Adjustable noise smoothing
-  * Adjustable peak threshold 
-  * Octave toggles
-  * MIDI octave channel segmenting
+  * Pitch Class Profiling (PCP)
 
-Install:
+  * FFT Bin Distance Weighting
+  
+  * FFT Windowing - rectangular, hamming, hann, triangular, cosine, and blackman windows.
+  
+  * FFT Linear Equalization - attenuate low freqencies and amplify high freqencies.
+  
+  * Noise Smoothing - rectangle, triangle, and adjacent average smoothers.
+  
+  * Adjustable Peak Threshold 
+  
+  * Octave toggles - narrow the spectrum to the octaves you are interested in recording.
+  
+  * MIDI octave channel segmenting - route each octave to its own MIDI channel.
+
+Install (Max OS X Standalone Application):
+
+  Spectrotune is now available in a standalone application for Mac OSX which you can download 
+  at http://github.com/corbanbrook/spectrotune/downloads
+
+  * Download http://github.com/corbanbrook/spectrotune/downloads
+
+  * Open DMG file 
+
+  * Put wav files in the music folder
+
+  * Run
+
+  Currently only exported as an application for Max OS X as I dont have any other platforms to
+  test on. If you want a standalone application for Windows or Linux please send me a request or 
+  install processing and export the application yourself.
+
+  If you wish to play with the source code you can follow the instructions below to install 
+  processing and the required libraries.
+
+Processing Install (all platforms):
 
   * Install processing ( http://www.processing.org )
   
@@ -31,19 +58,32 @@ Install:
     
   * Make sure your operating systems MIDI interface is configured properly.
 
+
 Usage:
+
+  * Put wav files you wish to open in the 'music' folder within the route of the sketch
 
   * Open Midi enabled sequencer software, ie Reason, Cubase, Fruityloops, etc.
 
   * Open processing
-  
-  * Edit the line of spectrotune.pde that specifies the audioFile you wish to open
 
   * Run
+
+  * Select 'Files' tab and select the wav file you wish to open.
+
+  * Record with your MIDI sequencer.
 
   If you are using a midi enabled sequencer software you should be able to record
   the input and pass on to any soft synth, or hardware synth.
 
+
+Keyboard Commands:
+
+  0-7   Toggle octaves 0-7 on or off.
+
+  p     Toggle PCP on or off.
+
+  ESC   Quit.
 
 
 @corban                                                    weare.buildingsky.net
