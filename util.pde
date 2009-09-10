@@ -222,4 +222,8 @@ void openAudioFile(String audioFile) {
     
     loadedAudioFile = audioFile;
     TRACK_LOADED = true;
+    
+    // Switch back to general tab
+    tabFiles.setActive(false);
+    tabDefault.setActive(true);
 }

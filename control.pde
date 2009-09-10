@@ -79,23 +79,27 @@ void keyPressed() {
 
 // ControlP5 events
 void controlEvent(ControlEvent event) {
-  switch(event.controller().id()) {
-    case(1):
-      PEAK_THRESHOLD = (int)(event.controller().value());
-      break;
-    case(2):
-      break;
-    case(3): // Progress Slider
+  if ( event.isController() ) {
+    switch(event.controller().id()) {
+      case(1):
+        PEAK_THRESHOLD = (int)(event.controller().value());
+        break;
+      case(2):
+        break;
+      case(3): // Progress Slider
+        PLAYING = true;
+        frameNumber = (int)(event.controller().value());
+        break;
+    }
+    
+    // File List IDs
+    if ( event.controller().id() >= 100 ) {
+      openAudioFile(audioFiles[(int)event.controller().value()]);
+    
       PLAYING = true;
-      frameNumber = (int)(event.controller().value());
-      break;
-  }
-  
-  // File List IDs
-  if ( event.controller().id() >= 100 ) {
-    openAudioFile(audioFiles[(int)event.controller().value()]);
-  
-    PLAYING = true;
+    }
+  } else if ( event.isTab() ) {
+    SELECTED_TAB = event.name();
   }
 }
 

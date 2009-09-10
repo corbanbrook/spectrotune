@@ -48,6 +48,7 @@ void render() {
         }
       }
     }
+
       
     if ( PLAYING ) {
       // Output text and MIDI
@@ -109,6 +110,21 @@ void render() {
   // Render GUI pane
   fill(0, 200);
   rect(width - 140, 0, width, height);
+ 
+  if ( SELECTED_TAB == "windowing" ) {
+    int windowX = 35;
+    int windowY = 110;
+    int windowHeight = 80;
+    stroke(100, 255, 240, 250);
+
+    float[] windowCurve = window.drawCurve();
+    for (int i = 0; i < windowCurve.length - 1; i++) {
+      line(i + windowX, windowY - windowCurve[i] * windowHeight, i+1 + windowX, windowY - windowCurve[i+1] * windowHeight);  
+    }
+    noStroke();
+  }
+ 
+ 
  
   // Render Buildingsky logo on top of it all
   image(logo, 25, 254);

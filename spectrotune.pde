@@ -14,6 +14,14 @@ ControlP5 controlP5;
 Window window;
 Smooth smoother;
 
+Tab tabDefault;
+Tab tabWindowing;
+Tab tabSmoothing;
+Tab tabMIDI;
+Tab tabFiles;
+
+String SELECTED_TAB;
+
 Slider progressSlider;
 Slider balanceSlider;
 
@@ -131,11 +139,11 @@ void setup() {
   // ControlP5 UI
   controlP5 = new ControlP5(this);
   
-  Tab tabDefault = controlP5.addTab("default");
-  Tab tabWindowing = controlP5.addTab("windowing");
-  Tab tabSmoothing = controlP5.addTab("smoothing");
-  Tab tabMIDI = controlP5.addTab("midi");
-  Tab tabFiles = controlP5.addTab("files");
+  tabDefault = controlP5.addTab("default").activateEvent(true);
+  tabWindowing = controlP5.addTab("windowing").activateEvent(true);
+  tabSmoothing = controlP5.addTab("smoothing").activateEvent(true);
+  tabMIDI = controlP5.addTab("midi").activateEvent(true);
+  tabFiles = controlP5.addTab("files").activateEvent(true);
   
   // GENERAL TAB
   tabDefault.setLabel("GENERAL");
