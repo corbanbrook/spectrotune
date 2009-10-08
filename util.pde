@@ -134,7 +134,7 @@ void precomputeScale() {
     if ( i > hFrames * 0.75 ) { break; } 
     
     int offset = (int)(i * audio.sampleRate() / framesPerSecond);
-    arraycopy(audio.getChannel(BufferedAudio.LEFT), offset, buffer, 0, bufferSize);
+    //arraycopy(audio.getChannel(BufferedAudio.LEFT), offset, buffer, 0, bufferSize);
     
     fft.forward(buffer);
     
@@ -188,9 +188,19 @@ void precomputeScale() {
 }
 
 void openAudioFile(String audioFile) {
-    audio = minim.loadSample(sketchPath + "/music/" + audioFile, bufferSize);
-    //player = minim.loadFile(sketchPath + "/music/" + audioFile, bufferSize);
-    //player.play();
+    if ( TRACK_LOADED ) {
+      audio.pause();
+      audio.close();
+      
+      loadedAudioFile = "";
+      
+      progressSlider.setValue(0);
+      progressSlider.setMax(0);
+     
+      TRACK_LOADED = false; 
+    }
+   
+    audio = minim.loadFile(sketchPath + "/music/" + audioFile, bufferSize);
     
     hFrames = int(audio.length() / 1000.0 * framesPerSecond);
     println("\nAudio source: " + audioFile + " " + audio.length() / 1000 + " seconds (" + hFrames + " frames)");
@@ -204,7 +214,6 @@ void openAudioFile(String audioFile) {
     }
     
     fft = new FFT(bufferSize, audio.sampleRate());
-    //fft.window(FFT.HAMMING);
     
     // Setup Arrays
     spectrum = new float[hFrames][fftSize];
@@ -216,7 +225,8 @@ void openAudioFile(String audioFile) {
     precomputeOctaveRegions();
     //precomputeScale();
     
-    progressSlider.setMax(hFrames);
+    progressSlider.setMax(audio.length());
+    cuePosition = audio.position();
     
     frameNumber = 0;
     
@@ -226,4 +236,6 @@ void openAudioFile(String audioFile) {
     // Switch back to general tab
     tabFiles.setActive(false);
     tabDefault.setActive(true);
+    
+    audio.play();
 }

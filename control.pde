@@ -1,11 +1,22 @@
 void keyPressed() {
   switch(key) {
-    case ' ': // save spectrograph and quit
+    case ' ': // pause/play toggle
       if ( TRACK_LOADED ) {
-        PLAYING = !PLAYING;
-        if ( !PLAYING ) {
+        if ( audio.isPlaying() ) {
           progressSlider.setValueLabel("PAUSED");
+          audio.pause();
+        } else {
+          progressSlider.setValueLabel("PLAYING");
+          audio.play();
         }
+      }
+      break;
+      
+    case 'm': // mute toggle
+      if ( audio.isMuted() ) {
+        audio.unmute();
+      } else {
+        audio.mute();
       }
       break;
     
@@ -16,7 +27,6 @@ void keyPressed() {
     
     case 'e': // turn equalizer on/off
       EQUALIZER_TOGGLE = !EQUALIZER_TOGGLE;
-      //fft.equalizer(EQUALIZER_TOGGLE);
       break;
     
     case 'p': // turn PCP on/off
@@ -87,8 +97,9 @@ void controlEvent(ControlEvent event) {
       case(2):
         break;
       case(3): // Progress Slider
-        PLAYING = true;
-        frameNumber = (int)(event.controller().value());
+        cuePosition = (int)(event.controller().value());
+        audio.cue(cuePosition);
+        audio.play();
         break;
     }
     
@@ -96,7 +107,7 @@ void controlEvent(ControlEvent event) {
     if ( event.controller().id() >= 100 ) {
       openAudioFile(audioFiles[(int)event.controller().value()]);
     
-      PLAYING = true;
+      audio.play();
     }
   } else if ( event.isTab() ) {
     SELECTED_TAB = event.name();

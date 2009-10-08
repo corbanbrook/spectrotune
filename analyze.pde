@@ -1,12 +1,12 @@
 void analyze() {
   int offset = (int)(frameNumber * audio.sampleRate() / framesPerSecond);
     
-  if ( offset + bufferSize > audio.getChannel(BufferedAudio.LEFT).length ) { // Reached the end of the audio track
-    PLAYING = false;
+  if ( audio.position() >= audio.length() ) { // Reached the end of the audio track
+    audio.pause();
   } else {
     if ( audio.type() == Minim.STEREO ) {
-      arraycopy(audio.getChannel(BufferedAudio.LEFT), offset, bufferLeft, 0, bufferSize);
-      arraycopy(audio.getChannel(BufferedAudio.RIGHT), offset, bufferRight, 0, bufferSize);
+      //arraycopy(audio.getChannel(BufferedAudio.LEFT), offset, bufferLeft, 0, bufferSize);
+      //arraycopy(audio.getChannel(BufferedAudio.RIGHT), offset, bufferRight, 0, bufferSize);
     
       // Apply Balance to buffer
       for ( int i = 0; i < bufferSize; i++ ) {
@@ -21,11 +21,8 @@ void analyze() {
           buffer[i] = bufferLeft[i] + bufferRight[i];
         }
       }
-      /*for ( int i = bufferSize/2; i < bufferSize; i++ ) {
-        buffer[i] = 0;
-      }*/
     } else {
-      arraycopy(audio.getChannel(BufferedAudio.LEFT), offset, buffer, 0, bufferSize); 
+      //arraycopy(audio.getChannel(BufferedAudio.LEFT), offset, buffer, 0, bufferSize); 
     }
     
     window.transform(buffer); // add window to buffer
@@ -120,6 +117,22 @@ void analyze() {
         peak[frameNumber][k] = VALLEY;
         peakset = false;
       } else if ( scurr > sprev && scurr > snext && (scurr > PEAK_THRESHOLD) ) { // peak
+        // apply Parobolic Peak Interpolation to estimate the real peak frequency and magnitude
+        float ym1 = sprev;
+        float y0 = scurr;
+        float yp1 = snext;
+        
+        float p = (yp1 - ym1) / (2 * ( 2 * y0 - yp1 - ym1));
+        float y = y0 - 0.25 * (ym1 - yp1) * p; // the estimated peak magnitude
+        float a = 0.5 * (ym1 - 2 * y0 + yp1);  
+        
+        float estimatedFreq = (k + p) * audio.sampleRate() / bufferSize;
+        
+        if ( freqToPitch(estimatedFreq) != freqToPitch(freq[k]) ) {
+          freq[k] = estimatedFreq;
+          spectrum[frameNumber][k] = y;
+        }
+        
         boolean isHarmonic = false;
         
         // filter harmonics from peaks

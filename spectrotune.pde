@@ -8,8 +8,7 @@ String[] audioFiles;
 String loadedAudioFile;
 
 Minim minim;
-AudioSample audio;
-AudioPlayer player;
+AudioPlayer audio;
 ControlP5 controlP5;
 Window window;
 Smooth smoother;
@@ -31,6 +30,8 @@ MidiOutput midiOut;
 
 float framesPerSecond = 25.0;
 int frameNumber = 0;
+
+int cuePosition; // cue position in miliseconds
 
 //int bufferSize = 32768;
 int bufferSize = 16384; // needs to be high for fft accuracy at lower octaves
@@ -91,7 +92,6 @@ boolean QUADRATIC_TOGGLE = false;
 boolean EXPONENTIAL_TOGGLE = false;
 
 boolean TRACK_LOADED = false;
-boolean PLAYING = false;
 
 boolean[] OCTAVE_TOGGLE = {false, true, true, true, true, true, true, true};
 int[] OCTAVE_CHANNEL = {0,0,0,0,0,0,0,0}; // set all octaves to channel 0 (0-indexed channel 1)
@@ -125,8 +125,8 @@ void setup() {
   */
   
   // Equalizer settings. Need a tab for this.
-  linearEQIntercept = 0.9f;
-  linearEQSlope = 0.01f;
+  linearEQIntercept = 1f;
+  linearEQSlope = 0.001f;
   
   // Logo UI Images
   bg = loadImage("background.png");
@@ -268,7 +268,7 @@ void setup() {
 }
 
 void draw() {
-  if ( TRACK_LOADED && PLAYING ){ // only analyze when playing
+  if ( TRACK_LOADED && audio.isPlaying() ){ // only analyze when playing
     analyze(); 
   }
   render(); // There are still some stuff to render even if the track paused or ended

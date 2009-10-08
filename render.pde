@@ -50,7 +50,7 @@ void render() {
     }
 
       
-    if ( PLAYING ) {
+    if ( audio.isPlaying() ) {
       // Output text and MIDI
       for ( int k = keyboardStart; k < keyboardEnd; k++ ) {
         int octave = k / 12 - 1; // MIDI notes start at octave -1 so we need to subtrack 1 to get the actual octave
@@ -93,8 +93,8 @@ void render() {
       textSize(10);
       
       // Update Progress bar
-      float percentComplete = frameNumber / (float)hFrames * 100;
-      progressSlider.setValue(frameNumber);
+      float percentComplete = audio.position() / (float)audio.length() * 100;
+      progressSlider.setValue(audio.position());
       progressSlider.setValueLabel(nf(round(percentComplete), 2) + "%");
       
       // Log FPS and % complete
