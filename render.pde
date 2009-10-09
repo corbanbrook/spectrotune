@@ -98,12 +98,10 @@ void render() {
       progressSlider.setValueLabel(nf(round(percentComplete), 2) + "%");
       
       // Log FPS and % complete
-      
       if (frameNumber % 100 == 0) {
         println("  " + round(percentComplete) + "% complete (" + round(frameRate) + " fps)");
       }
-      frameNumber++;
-    } // end if PLAYING
+    } // end if audio.isPlaying
   } else {
     progressSlider.setValueLabel("NO FILE LOADED");
   } // end if TRACK_LOADED
@@ -111,7 +109,7 @@ void render() {
   fill(0, 200);
   rect(width - 140, 0, width, height);
  
-  if ( SELECTED_TAB == "windowing" ) {
+  if ( controlP5.window(this).currentTab().name() == "windowing" ) {
     int windowX = 35;
     int windowY = 110;
     int windowHeight = 80;

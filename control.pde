@@ -106,11 +106,7 @@ void controlEvent(ControlEvent event) {
     // File List IDs
     if ( event.controller().id() >= 100 ) {
       openAudioFile(audioFiles[(int)event.controller().value()]);
-    
-      audio.play();
     }
-  } else if ( event.isTab() ) {
-    SELECTED_TAB = event.name();
   }
 }
 

@@ -7,20 +7,6 @@ void analyze() {
     if ( audio.type() == Minim.STEREO ) {
       //arraycopy(audio.getChannel(BufferedAudio.LEFT), offset, bufferLeft, 0, bufferSize);
       //arraycopy(audio.getChannel(BufferedAudio.RIGHT), offset, bufferRight, 0, bufferSize);
-    
-      // Apply Balance to buffer
-      for ( int i = 0; i < bufferSize; i++ ) {
-        int balanceValue = (int)balanceSlider.value();
-        if ( balanceValue > 0 ) {
-          float balancePercent = (100 - balanceValue) / 100.0; 
-          buffer[i] = (bufferLeft[i] * balancePercent) + bufferRight[i];
-        } else if ( balanceValue < 0 ) {
-          float balancePercent = (100 - balanceValue * -1) / 100.0; 
-          buffer[i] = bufferLeft[i] + (bufferRight[i] * balancePercent);
-        } else {
-          buffer[i] = bufferLeft[i] + bufferRight[i];
-        }
-      }
     } else {
       //arraycopy(audio.getChannel(BufferedAudio.LEFT), offset, buffer, 0, bufferSize); 
     }

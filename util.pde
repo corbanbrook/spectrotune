@@ -202,6 +202,10 @@ void openAudioFile(String audioFile) {
    
     audio = minim.loadFile(sketchPath + "/music/" + audioFile, bufferSize);
     
+    sampler = new Sampler();
+    
+    audio.addListener(sampler);
+    
     hFrames = int(audio.length() / 1000.0 * framesPerSecond);
     println("\nAudio source: " + audioFile + " " + audio.length() / 1000 + " seconds (" + hFrames + " frames)");
     println("Time size: " + bufferSize + " bytes / Sample rate: " + audio.sampleRate() / 1000.0 + "kHz");
@@ -234,8 +238,7 @@ void openAudioFile(String audioFile) {
     TRACK_LOADED = true;
     
     // Switch back to general tab
-    tabFiles.setActive(false);
-    tabDefault.setActive(true);
+    controlP5.window(this).activateTab("default");
     
     audio.play();
 }

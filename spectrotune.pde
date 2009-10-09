@@ -9,17 +9,17 @@ String loadedAudioFile;
 
 Minim minim;
 AudioPlayer audio;
+Sampler sampler;
 ControlP5 controlP5;
 Window window;
 Smooth smoother;
+
 
 Tab tabDefault;
 Tab tabWindowing;
 Tab tabSmoothing;
 Tab tabMIDI;
 Tab tabFiles;
-
-String SELECTED_TAB;
 
 Slider progressSlider;
 Slider balanceSlider;
@@ -34,8 +34,9 @@ int frameNumber = 0;
 int cuePosition; // cue position in miliseconds
 
 //int bufferSize = 32768;
-int bufferSize = 16384; // needs to be high for fft accuracy at lower octaves
+//int bufferSize = 16384; // needs to be high for fft accuracy at lower octaves
 //int bufferSize = 8192;
+int bufferSize = 1024;
 //int bufferSize = 512;
 int fftSize = bufferSize/2;
 
@@ -106,7 +107,7 @@ public static final int SLOPEDOWN = 5;
 
 void setup() {
   size(510, 288, OPENGL);
-  frameRate(framesPerSecond); // lock framerate
+  //frameRate(framesPerSecond); // lock framerate
   
   // Create MIDI output interface - select the first found device by default
   midiOut = RWMidi.getOutputDevices()[0].createOutput();
@@ -268,13 +269,15 @@ void setup() {
 }
 
 void draw() {
-  if ( TRACK_LOADED && audio.isPlaying() ){ // only analyze when playing
-    analyze(); 
-  }
   render(); // There are still some stuff to render even if the track paused or ended
+  
+  if ( TRACK_LOADED && audio.isPlaying() ) {
+    sampler.draw();
+  }
 }
 
 void stop() {
+  audio.close();
   minim.stop();
   super.stop();
 }
