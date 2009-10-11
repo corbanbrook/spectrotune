@@ -108,12 +108,18 @@ void normalizePCP() {
   }
 }
 
+void zeroPadBuffer() {
+  for (int i = 0; i < fftBufferSize; i++) {
+    buffer[i] = 0f;
+  }  
+}
+
 void precomputeOctaveRegions() {
   for ( int j = 0; j < 8; j++) {
     fftBinStart[j] = 0;
     fftBinEnd[j] = 0;
     for ( int k = 0; k < fftSize; k++) {
-      float freq = k / (float)bufferSize * audio.sampleRate();
+      float freq = k / (float)fftBufferSize * audio.sampleRate();
       if ( freq >= octaveLowRange(j) && fftBinStart[j] == 0 ) {
         fftBinStart[j] = k;
       } else if ( freq > octaveHighRange(j) && fftBinEnd[j] == 0 ) {
@@ -125,6 +131,7 @@ void precomputeOctaveRegions() {
   println("Start: " + fftBinStart[0] + " End: " + fftBinEnd[7] + " (" + fftSize + " total)");
 }
 
+// TODO: Not sure how to precompute the scale with an AudioPlayer. Might need to load up peices of the audio file in a buffer first.
 void precomputeScale() {
   float freqLowRange = octaveLowRange(0);
   float freqHighRange = octaveHighRange(8);
@@ -207,6 +214,7 @@ void openAudioFile(String audioFile) {
     audio.addListener(sampler);
     
     hFrames = int(audio.length() / 1000.0 * framesPerSecond);
+    
     println("\nAudio source: " + audioFile + " " + audio.length() / 1000 + " seconds (" + hFrames + " frames)");
     println("Time size: " + bufferSize + " bytes / Sample rate: " + audio.sampleRate() / 1000.0 + "kHz");
     println("FFT bandwidth: " + (2.0 / bufferSize) * ((float)audio.sampleRate() / 2.0) + "Hz");
@@ -217,7 +225,7 @@ void openAudioFile(String audioFile) {
       println("Channels: 1 (MONO)\n");
     }
     
-    fft = new FFT(bufferSize, audio.sampleRate());
+    fft = new FFT(fftBufferSize, audio.sampleRate());
     
     // Setup Arrays
     spectrum = new float[hFrames][fftSize];
@@ -227,7 +235,7 @@ void openAudioFile(String audioFile) {
     pcp = new float[hFrames][12];
     
     precomputeOctaveRegions();
-    //precomputeScale();
+    //precomputeScale(); // disabled for now.
     
     progressSlider.setMax(audio.length());
     cuePosition = audio.position();

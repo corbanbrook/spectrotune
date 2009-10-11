@@ -14,7 +14,6 @@ ControlP5 controlP5;
 Window window;
 Smooth smoother;
 
-
 Tab tabDefault;
 Tab tabWindowing;
 Tab tabSmoothing;
@@ -36,9 +35,14 @@ int cuePosition; // cue position in miliseconds
 //int bufferSize = 32768;
 //int bufferSize = 16384; // needs to be high for fft accuracy at lower octaves
 //int bufferSize = 8192;
+//int bufferSize = 4096;
 int bufferSize = 1024;
 //int bufferSize = 512;
-int fftSize = bufferSize/2;
+
+int ZERO_PAD_MULTIPLIER = 1;
+
+int fftBufferSize = bufferSize * ZERO_PAD_MULTIPLIER;
+int fftSize = fftBufferSize/2;
 
 int PEAK_THRESHOLD = 75;
 
@@ -59,9 +63,7 @@ String[] semitones = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#
 boolean[] keyboard = { true, false, true, false, true, true, false, true, false, true, false, true };
 color[] toneColor = { color(0, 200, 50), color(0, 100, 200), color(200, 100, 0), color(255, 0, 100), color(50, 150, 200), color(100, 0, 200), color(0, 255, 50), color(255, 80, 200), color(20, 100, 255), color(50, 200, 150), color(50, 160, 20), color(100, 255, 50) };
 
-float[] buffer = new float[bufferSize];
-float[] bufferLeft = new float[bufferSize];
-float[] bufferRight = new float[bufferSize];
+float[] buffer = new float[fftBufferSize];
 
 float[][] spectrum;
 int[][] peak;
@@ -83,7 +85,6 @@ boolean PCP_TOGGLE = true;
 boolean EQUALIZER_TOGGLE = false;
 boolean HARMONICS_TOGGLE = true;
 boolean SMOOTH_TOGGLE = true;
-//int SMOOTH_TYPE = FFT.TRIANGLE;
 int SMOOTH_POINTS = 3;
 
 boolean UNIFORM_TOGGLE = true;
@@ -107,6 +108,7 @@ public static final int SLOPEDOWN = 5;
 
 void setup() {
   size(510, 288, OPENGL);
+  
   //frameRate(framesPerSecond); // lock framerate
   
   // Create MIDI output interface - select the first found device by default
@@ -126,8 +128,8 @@ void setup() {
   */
   
   // Equalizer settings. Need a tab for this.
-  linearEQIntercept = 1f;
-  linearEQSlope = 0.001f;
+  //linearEQIntercept = 1f;
+  //linearEQSlope = 0.001f;
   
   // Logo UI Images
   bg = loadImage("background.png");
@@ -261,23 +263,23 @@ void setup() {
   progressSlider.setId(3);
   progressSlider.moveTo("global"); // always show no matter what tab is selected
     
- 
+  // zero pad buffer
+  zeroPadBuffer();
+    
   textFont(createFont("Arial", 10, true));
   
   rectMode(CORNERS);
   smooth();
 }
 
-void draw() {
+void draw() {  
   render(); // There are still some stuff to render even if the track paused or ended
-  
-  if ( TRACK_LOADED && audio.isPlaying() ) {
-    sampler.draw();
-  }
 }
 
 void stop() {
-  audio.close();
+  if ( audio != null ) {
+    audio.close();
+  }
   minim.stop();
   super.stop();
 }

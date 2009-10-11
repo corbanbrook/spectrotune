@@ -105,10 +105,12 @@ void render() {
   } else {
     progressSlider.setValueLabel("NO FILE LOADED");
   } // end if TRACK_LOADED
+  
   // Render GUI pane
   fill(0, 200);
   rect(width - 140, 0, width, height);
  
+  // Render Windowing curve
   if ( controlP5.window(this).currentTab().name() == "windowing" ) {
     int windowX = 35;
     int windowY = 110;
