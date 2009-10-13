@@ -3,6 +3,7 @@ import ddf.minim.*;
 import ddf.minim.analysis.*;
 import rwmidi.*;
 import controlP5.*;
+import java.lang.reflect.InvocationTargetException;
 
 String[] audioFiles;
 String loadedAudioFile;
@@ -33,13 +34,13 @@ int frameNumber = 0;
 int cuePosition; // cue position in miliseconds
 
 //int bufferSize = 32768;
-//int bufferSize = 16384; // needs to be high for fft accuracy at lower octaves
+//int bufferSize = 16384;
 //int bufferSize = 8192;
 //int bufferSize = 4096;
 int bufferSize = 1024;
 //int bufferSize = 512;
 
-int ZERO_PAD_MULTIPLIER = 4;
+int ZERO_PAD_MULTIPLIER = 16;
 
 int fftBufferSize = bufferSize * ZERO_PAD_MULTIPLIER;
 int fftSize = fftBufferSize/2;
@@ -64,8 +65,9 @@ color[] toneColor = { color(0, 200, 50), color(0, 100, 200), color(200, 100, 0),
 
 float[] buffer = new float[fftBufferSize];
 
-float[][] spectrum;
-int[][] peak;
+float[] spectrum;
+int[] peak;
+
 boolean[][] pitch;
 float[][] level;
 float[][] pcp;
@@ -271,8 +273,13 @@ void draw() {
 
 void stop() {
   if ( audio != null ) {
+    audio.pause();
+    TRACK_LOADED = false;
     audio.close();
   }
+  
+  closeNotes(); // close any open MIDI notes
+  
   minim.stop();
   super.stop();
 }

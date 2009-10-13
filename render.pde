@@ -69,7 +69,7 @@ void render() {
       progressSlider.setValueLabel(nf(round(percentComplete), 2) + "%");
       
       // Log FPS and % complete
-      if (frameNumber % 500 == 0 && audio.isPlaying() ) {
+      if (frameNumber % 100 == 0 && audio.isPlaying() ) {
         println("  " + round(percentComplete) + "% complete (" + round(frameRate) + " fps)" + " frame #: " + frameNumber);
       }
     } // end if audio.isPlaying

@@ -20,11 +20,6 @@ void keyPressed() {
       }
       break;
     
-    /* case 's': // save spectrograph and quit
-      saveSpectrograph();
-      exit();
-      break; */
-    
     case 'e': // turn equalizer on/off
       EQUALIZER_TOGGLE = !EQUALIZER_TOGGLE;
       break;
@@ -97,9 +92,11 @@ void controlEvent(ControlEvent event) {
       case(2):
         break;
       case(3): // Progress Slider
+        // This event is triggered whenever the slider is updated. It is a progress bar updated every buffer iteration.
         cuePosition = (int)(event.controller().value());
-        audio.cue(cuePosition);
-        audio.play();
+        //audio.cue(cuePosition);
+        //frameNumber = round((float)cuePosition / 1000f * (float)audio.sampleRate() / (float)bufferSize);
+        //audio.play();
         break;
     }
     

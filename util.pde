@@ -178,8 +178,8 @@ void openAudioFile(String audioFile) {
     fft = new FFT(fftBufferSize, audio.sampleRate());
     
     // Setup Arrays
-    spectrum = new float[hFrames][fftSize];  // HUGE 200mb+
-    peak = new int[hFrames][fftSize]; // HUGE 200mb+
+    spectrum = new float[fftSize];  // HUGE 200mb+
+    peak = new int[fftSize]; // HUGE 200mb+
     
     pitch = new boolean[hFrames][128];  // MIDI note was detected at this position
     level = new float[hFrames][128];    // level of MIDI note at this position

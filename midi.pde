@@ -18,3 +18,10 @@ void outputMIDI() {
     }
   }
 }
+
+void closeNotes() {
+  for ( int k = keyboardStart; k < keyboardEnd; k++ ) {
+    int octave = k / 12 - 1;
+    midiOut.sendNoteOff(OCTAVE_CHANNEL[octave], k, 90);
+  }
+}
