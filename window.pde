@@ -6,7 +6,7 @@ public class Window {
   public static final int TRIANGULAR = 4;
   public static final int BLACKMAN = 5;
 
-  private int mode = HAMMING; // HAMMING is a decent default
+  private int mode = HAMMING;
 
   void setMode(int window) {
     this.mode = window;

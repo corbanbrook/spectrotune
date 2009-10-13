@@ -35,14 +35,14 @@ class Sampler implements AudioListener
     process();
   }
   
-  synchronized void process() {
+  void process() {
+    frameNumber++;
     // need to apply the window transform before we zeropad
     window.transform(left); // add window to samples
     
     arrayCopy(left, 0, buffer, 0, left.length);
     
     analyze();
-    
-    frameNumber++;
+    outputMIDI();
   }
 }

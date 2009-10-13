@@ -49,58 +49,6 @@ float binWeight(int type, float x) {
   }
 }
 
-/*
-// Save an image of the spectrograph
-void saveSpectrograph() {
-  for ( int x = 0; x < frameNumber; x++ ) {
-    // write spectrum array to PImage then save.
-    for ( int y = 0; y < fftSize; y++ ) {
-      color c = color(255.0 * spectrum[x][y] / 300, 255.0 * spectrum[x][y] * 10 / 300 , 255.0 * spectrum[x][y] * 20 / 300);
-
-      spectrograph.set(x,spectrographHeight - y, c);
-                
-      switch ( peak[x][y] ) {
-        case PEAK:
-          spectrograph.set(x, spectrographHeight -y, color(255, 0, 100));
-          break;  
-        case VALLEY: 
-          //img.set(x, imgHeight -y, color(0, 0, 0));
-          break;
-        case HARMONIC:
-          spectrograph.set(x, spectrographHeight -y, color(255, 200, 0));
-          break;
-      }
-    }
-  }
-    
-  spectrograph.save("spectrograph.png");
-  println("spectrograph saved.");
-} */
-
-void switchLabel(boolean toggle, String label, int pos) {
-  pos *= 12;
-  pos += 10;
-  if (toggle) {
-    fill(200, 255, 255);
-  } else {
-    fill(80, 200);
-  }
-  text(label, width - 120, pos);
-  rect(width - 120 - 10, - 7 + pos, width - 120  - 5, pos);
-}
-
-void valLabel(int val, String label, int pos) {
-  pos *= 12;
-  pos += 10;
-
-  fill(255, 255, 100);
-  
-  text(label, width - 120, pos);
-  
-  fill(255, 160, 60);
-  text(val, width -50, pos);
-}
-
 void normalizePCP() {
   float pcpMax = max(pcp[frameNumber]);
   for ( int k = 0; k < 12; k++ ) {
@@ -213,10 +161,12 @@ void openAudioFile(String audioFile) {
     
     audio.addListener(sampler);
     
-    hFrames = int(audio.length() / 1000.0 * framesPerSecond);
+    //hFrames = int(audio.length() / 1000.0 * framesPerSecond);
+    
+    hFrames = round((float)audio.length() / 1000f * (float)audio.sampleRate() / (float)bufferSize);
     
     println("\nAudio source: " + audioFile + " " + audio.length() / 1000 + " seconds (" + hFrames + " frames)");
-    println("Time size: " + bufferSize + " bytes / Sample rate: " + audio.sampleRate() / 1000.0 + "kHz");
+    println("Time size: " + bufferSize + " bytes / Sample rate: " + audio.sampleRate() / 1000f + "kHz");
     println("FFT bandwidth: " + (2.0 / bufferSize) * ((float)audio.sampleRate() / 2.0) + "Hz");
     
     if (audio.type() == Minim.STEREO) {      
@@ -228,11 +178,12 @@ void openAudioFile(String audioFile) {
     fft = new FFT(fftBufferSize, audio.sampleRate());
     
     // Setup Arrays
-    spectrum = new float[hFrames][fftSize];
-    peak = new int[hFrames][fftSize];
-    pitch = new boolean[hFrames][128];
-    level = new float[hFrames][128];
-    pcp = new float[hFrames][12];
+    spectrum = new float[hFrames][fftSize];  // HUGE 200mb+
+    peak = new int[hFrames][fftSize]; // HUGE 200mb+
+    
+    pitch = new boolean[hFrames][128];  // MIDI note was detected at this position
+    level = new float[hFrames][128];    // level of MIDI note at this position
+    pcp = new float[hFrames][12];       // PitchClassProfile at this frame
     
     precomputeOctaveRegions();
     //precomputeScale(); // disabled for now.
@@ -240,13 +191,12 @@ void openAudioFile(String audioFile) {
     progressSlider.setMax(audio.length());
     cuePosition = audio.position();
     
+    // Switch back to general tab
+    controlP5.window(this).activateTab("default");
+    
     frameNumber = 0;
     
     loadedAudioFile = audioFile;
     TRACK_LOADED = true;
-    
-    // Switch back to general tab
-    controlP5.window(this).activateTab("default");
-    
     audio.play();
 }

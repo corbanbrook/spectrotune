@@ -39,19 +39,18 @@ int cuePosition; // cue position in miliseconds
 int bufferSize = 1024;
 //int bufferSize = 512;
 
-int ZERO_PAD_MULTIPLIER = 1;
+int ZERO_PAD_MULTIPLIER = 4;
 
 int fftBufferSize = bufferSize * ZERO_PAD_MULTIPLIER;
 int fftSize = fftBufferSize/2;
 
 int PEAK_THRESHOLD = 75;
 
-int hFrames; // horizontal frames
+// MIDI notes span from 0 - 128, octaves -1 -> 9. Specify start and end for piano
+int keyboardStart = 12; // 12 is octave C0
+int keyboardEnd = 108;
 
-// High resolution spectrograph image
-PImage spectrograph;
-int spectrographHeight;
-int spectrographWidth;
+int hFrames; // horizontal frames
 
 PImage bg;
 PImage whiteKey;
@@ -119,13 +118,6 @@ void setup() {
   
   window = new Window();
   smoother = new Smooth();
-
-  /* DISABLED
-  // Create spectrograph image
-  spectrographWidth = hFrames;
-  spectrographHeight = 1024; // or fftSize
-  spectrograph = createImage(spectrographWidth, spectrographHeight, RGB);
-  */
   
   // Equalizer settings. Need a tab for this.
   //linearEQIntercept = 1f;
@@ -222,19 +214,20 @@ void setup() {
   controlP5.addTextlabel("labelWindowing", "WINDOWING", 380, 10).moveTo(tabWindowing);
 
   Radio radioWindow = controlP5.addRadio("radioWindow", 380, 30);
-  radioWindow.add("RECTANGULAR", Window.RECTANGULAR); // default
+  radioWindow.add("RECTANGULAR", Window.RECTANGULAR);
   radioWindow.add("HAMMING", Window.HAMMING);
   radioWindow.add("HANN", Window.HANN);
   radioWindow.add("COSINE", Window.COSINE);
   radioWindow.add("TRIANGULAR", Window.TRIANGULAR);
   radioWindow.add("BLACKMAN", Window.BLACKMAN);
   radioWindow.moveTo(tabWindowing);
+  radioWindow.activate("HAMMING");
   
   controlP5.addTextlabel("labelSmoothing", "SMOOTHING", 380, 10).moveTo(tabSmoothing);
   
   Radio radioSmooth = controlP5.addRadio("radioSmooth", 380, 30);
   radioSmooth.add("NONE", Smooth.NONE);
-  radioSmooth.add("RECTANGLE", Smooth.RECTANGLE); // default
+  radioSmooth.add("RECTANGLE", Smooth.RECTANGLE);
   radioSmooth.add("TRIANGLE", Smooth.TRIANGLE);
   radioSmooth.add("AJACENT AVERAGE", Smooth.ADJAVG);
   radioSmooth.moveTo(tabSmoothing);
@@ -272,8 +265,8 @@ void setup() {
   smooth();
 }
 
-void draw() {  
-  render(); // There are still some stuff to render even if the track paused or ended
+void draw() {
+  render();
 }
 
 void stop() {
