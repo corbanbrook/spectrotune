@@ -85,6 +85,7 @@ boolean SCALE_LOCK_TOGGLE = false;
 boolean PCP_TOGGLE = true;
 boolean EQUALIZER_TOGGLE = false;
 boolean HARMONICS_TOGGLE = true;
+boolean MIDI_TOGGLE = true;
 boolean SMOOTH_TOGGLE = true;
 int SMOOTH_POINTS = 3;
 
@@ -186,15 +187,20 @@ void setup() {
   // MIDI TAB
   controlP5.addTextlabel("labelMIDI", "MIDI", 380, 10).moveTo(tabMIDI);
   
-  Numberbox oct0 = controlP5.addNumberbox("oct0", 1, 380, 30, 20, 14);
-  Numberbox oct1 = controlP5.addNumberbox("oct1", 1, 410, 30, 20, 14); 
-  Numberbox oct2 = controlP5.addNumberbox("oct2", 1, 440, 30, 20, 14);
-  Numberbox oct3 = controlP5.addNumberbox("oct3", 1, 470, 30, 20, 14);
+  // MIDI output toggle
+  Toggle toggleMIDI = controlP5.addToggle("toggleMIDI", MIDI_TOGGLE, 380, 30, 10,10);
+  toggleMIDI.setLabel("MIDI OUTPUT");
+  toggleMIDI.moveTo(tabMIDI);
   
-  Numberbox oct4 = controlP5.addNumberbox("oct4", 1, 380, 60, 20, 14);
-  Numberbox oct5 = controlP5.addNumberbox("oct5", 1, 410, 60, 20, 14); 
-  Numberbox oct6 = controlP5.addNumberbox("oct6", 1, 440, 60, 20, 14);
-  Numberbox oct7 = controlP5.addNumberbox("oct7", 1, 470, 60, 20, 14);
+  Numberbox oct0 = controlP5.addNumberbox("oct0", 1, 380, 60, 20, 14);
+  Numberbox oct1 = controlP5.addNumberbox("oct1", 1, 410, 60, 20, 14); 
+  Numberbox oct2 = controlP5.addNumberbox("oct2", 1, 440, 60, 20, 14);
+  Numberbox oct3 = controlP5.addNumberbox("oct3", 1, 470, 60, 20, 14);
+  
+  Numberbox oct4 = controlP5.addNumberbox("oct4", 1, 380, 90, 20, 14);
+  Numberbox oct5 = controlP5.addNumberbox("oct5", 1, 410, 90, 20, 14); 
+  Numberbox oct6 = controlP5.addNumberbox("oct6", 1, 440, 90, 20, 14);
+  Numberbox oct7 = controlP5.addNumberbox("oct7", 1, 470, 90, 20, 14);
   
   // move MIDI Channels to midi tab
   oct0.moveTo(tabMIDI);

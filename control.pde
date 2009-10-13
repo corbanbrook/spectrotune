@@ -127,6 +127,13 @@ void togglePCP(boolean flag) {
   PCP_TOGGLE = flag;
 }
 
+void toggleMIDI(boolean flag) {
+  MIDI_TOGGLE = flag;
+  if ( ! MIDI_TOGGLE ) {
+    closeNotes();
+  }
+}
+
 void toggleScaleLock(boolean flag) {
   SCALE_LOCK_TOGGLE = flag;
 }
