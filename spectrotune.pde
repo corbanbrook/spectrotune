@@ -31,7 +31,9 @@ MidiOutput midiOut;
 float framesPerSecond = 25.0;
 int frameNumber = 0;
 
+
 int cuePosition; // cue position in miliseconds
+int lastPosition = 0;
 
 //int bufferSize = 32768;
 //int bufferSize = 16384;

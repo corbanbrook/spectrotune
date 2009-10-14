@@ -94,9 +94,17 @@ void controlEvent(ControlEvent event) {
       case(3): // Progress Slider
         // This event is triggered whenever the slider is updated. It is a progress bar updated every buffer iteration.
         cuePosition = (int)(event.controller().value());
-        //audio.cue(cuePosition);
-        //frameNumber = round((float)cuePosition / 1000f * (float)audio.sampleRate() / (float)bufferSize);
-        //audio.play();
+        
+        if ( cuePosition < lastPosition || cuePosition - lastPosition > 2000 ) { // seeked backwards or forwards
+          audio.pause();
+          audio.cue(cuePosition);
+          frameNumber = round((float)cuePosition / 1000f * (float)audio.sampleRate() / (float)bufferSize);
+          audio.play();
+          println("seeked");
+        }
+        
+        lastPosition = cuePosition;
+
         break;
     }
     
