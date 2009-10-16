@@ -285,7 +285,7 @@ void stop() {
     audio.close();
   }
   
-  closeNotes(); // close any open MIDI notes
+  closeMIDINotes(); // close any open MIDI notes
   
   minim.stop();
   super.stop();

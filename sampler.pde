@@ -38,7 +38,7 @@ class Sampler implements AudioListener
   void process() {
     if ( frameNumber >= hFrames -1) { // track reached the end
       audio.pause();
-      closeNotes();
+      closeMIDINotes();
     } else {
       frameNumber++;
       
@@ -49,7 +49,7 @@ class Sampler implements AudioListener
     
       if ( TRACK_LOADED && audio.isPlaying() ) {
         analyze();
-        outputMIDI();
+        outputMIDINotes();
       }
     }
   }
@@ -78,7 +78,6 @@ class Sampler implements AudioListener
       boolean filterFreq = false;
   
       // Clear arrays that may have been pre populated before rewinding
-      spectrum[k] = 0;
       level[frameNumber][freqToPitch(freq[k])] = 0;
       pitch[frameNumber][freqToPitch(freq[k])] = false;
   

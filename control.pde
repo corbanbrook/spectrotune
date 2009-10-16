@@ -4,7 +4,7 @@ void keyPressed() {
       if ( TRACK_LOADED ) {
         if ( audio.isPlaying() ) {
           progressSlider.setValueLabel("PAUSED");
-          closeNotes();
+          closeMIDINotes();
           audio.pause();
         } else {
           progressSlider.setValueLabel("PLAYING");
@@ -98,7 +98,7 @@ void controlEvent(ControlEvent event) {
         
         if ( cuePosition < lastPosition || cuePosition - lastPosition > 2000 ) { // seeked backwards or forwards
           audio.pause();
-          closeNotes();
+          closeMIDINotes();
           frameNumber = round((float)cuePosition / 1000f * (float)audio.sampleRate() / (float)bufferSize);
           audio.cue(cuePosition);
           audio.play(); 
@@ -139,7 +139,7 @@ void togglePCP(boolean flag) {
 void toggleMIDI(boolean flag) {
   MIDI_TOGGLE = flag;
   if ( ! MIDI_TOGGLE ) {
-    closeNotes();
+    closeMIDINotes();
   }
 }
 
