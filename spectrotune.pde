@@ -231,7 +231,7 @@ void setup() {
   radioWindow.add("TRIANGULAR", Window.TRIANGULAR);
   radioWindow.add("BLACKMAN", Window.BLACKMAN);
   radioWindow.moveTo(tabWindowing);
-  radioWindow.activate("HAMMING");
+  //radioWindow.activate("HAMMING"); // set default
   
   controlP5.addTextlabel("labelSmoothing", "SMOOTHING", 380, 10).moveTo(tabSmoothing);
   

@@ -36,21 +36,25 @@ class Sampler implements AudioListener
   }
   
   void process() {
-    frameNumber++;
-    // need to apply the window transform before we zeropad
-    window.transform(left); // add window to samples
+    if ( frameNumber >= hFrames -1) { // track reached the end
+      audio.pause();
+      closeNotes();
+    } else {
+      frameNumber++;
+      
+      // need to apply the window transform before we zeropad
+      window.transform(left); // add window to samples
     
-    arrayCopy(left, 0, buffer, 0, left.length);
+      arrayCopy(left, 0, buffer, 0, left.length);
     
-    if ( TRACK_LOADED && audio.isPlaying() ) {
-      analyze();
-      outputMIDI();
+      if ( TRACK_LOADED && audio.isPlaying() ) {
+        analyze();
+        outputMIDI();
+      }
     }
   }
   
-    void analyze() {
-    int offset = (int)(frameNumber * audio.sampleRate() / framesPerSecond);
-    
+  void analyze() {
     fft.forward(buffer); // run fft on the buffer
     
     smoother.apply(fft); // run the smoother on the fft spectra

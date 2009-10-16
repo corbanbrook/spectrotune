@@ -96,11 +96,10 @@ void controlEvent(ControlEvent event) {
         cuePosition = (int)(event.controller().value());
         
         if ( cuePosition < lastPosition || cuePosition - lastPosition > 2000 ) { // seeked backwards or forwards
-          audio.pause();
-          audio.cue(cuePosition);
+          //audio.pause();
           frameNumber = round((float)cuePosition / 1000f * (float)audio.sampleRate() / (float)bufferSize);
+          audio.cue(cuePosition);
           audio.play();
-          println("seeked");
         }
         
         lastPosition = cuePosition;

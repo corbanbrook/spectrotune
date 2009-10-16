@@ -8,7 +8,7 @@ void render() {
   
   // Render octave toggle buttons for active octaves
   for ( int i = 0; i < 8; i++ ) {
-    if (OCTAVE_TOGGLE[i]) {
+    if ( OCTAVE_TOGGLE[i] ) {
       image(octaveBtn, 0, height - (i * 36) - 36);
     }
   }
