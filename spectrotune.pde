@@ -124,6 +124,9 @@ void setup() {
   window = new Window();
   smoother = new Smooth();
   
+  // zero pad the buffer
+  zeroPadBuffer();
+  
   // Equalizer settings. Need a tab for this.
   //linearEQIntercept = 1f;
   //linearEQSlope = 0.001f;
@@ -134,7 +137,6 @@ void setup() {
   blackKey = loadImage("blackkey.png");
   octaveBtn = loadImage("octavebutton.png");
   logo = loadImage("buildingsky.png");
-  
    
   // ControlP5 UI
   controlP5 = new ControlP5(this);
@@ -169,7 +171,7 @@ void setup() {
   // FFT bin distance weighting radios
   //controlP5.addTextlabel("labelWeight", "FFT WEIGHT", 380, 130);
   Radio radioWeight = controlP5.addRadio("radioWeight", 380, 160);
-  radioWeight.add("UNIFORM", UNIFORM); // default
+  radioWeight.add("UNIFORM (OFF)", UNIFORM); // default
   radioWeight.add("DISCRETE", DISCRETE);
   radioWeight.add("LINERAR", LINEAR);
   radioWeight.add("QUADRATIC", QUADRATIC);
@@ -259,16 +261,13 @@ void setup() {
     }
   }
   
-  // GLOBAL
+  // GLOBAL UI
   
   // Progress bar 
   progressSlider = controlP5.addSlider("Progress", 0, 0, 0, 380, height - 20, 75, 10);
   progressSlider.setId(3);
   progressSlider.moveTo("global"); // always show no matter what tab is selected
-    
-  // zero pad buffer
-  zeroPadBuffer();
-    
+      
   textFont(createFont("Arial", 10, true));
   
   rectMode(CORNERS);
