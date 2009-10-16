@@ -4,8 +4,8 @@ void keyPressed() {
       if ( TRACK_LOADED ) {
         if ( audio.isPlaying() ) {
           progressSlider.setValueLabel("PAUSED");
-          closeMIDINotes();
           audio.pause();
+          closeMIDINotes();
         } else {
           progressSlider.setValueLabel("PLAYING");
           audio.play();

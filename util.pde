@@ -85,8 +85,8 @@ void precomputeScale() {
   float freqHighRange = octaveHighRange(8);
   float[] bins = new float[fftSize];
   int computedFrames = 0;
-  for ( int i = hFrames/2; i < hFrames; i++ ) {
-    if ( i > hFrames * 0.75 ) { break; } 
+  for ( int i = frames/2; i < frames; i++ ) {
+    if ( i > frames * 0.75 ) { break; } 
     
     int offset = (int)(i * audio.sampleRate() / framesPerSecond);
     //arraycopy(audio.getChannel(BufferedAudio.LEFT), offset, buffer, 0, bufferSize);
@@ -139,7 +139,7 @@ void precomputeScale() {
       print(semitones[i] + " ");
     }
   } 
-  println("\nDone computing scale. " + computedFrames + "/" + hFrames);
+  println("\nDone computing scale. " + computedFrames + "/" + frames);
 }
 
 void openAudioFile(String audioFile) {
@@ -157,15 +157,13 @@ void openAudioFile(String audioFile) {
    
     audio = minim.loadFile(sketchPath + "/music/" + audioFile, bufferSize);
     
-    sampler = new Sampler();
+    
     
     audio.addListener(sampler);
     
-    //hFrames = int(audio.length() / 1000.0 * framesPerSecond);
+    frames = round((float)audio.length() / 1000f * (float)audio.sampleRate() / (float)bufferSize);
     
-    hFrames = round((float)audio.length() / 1000f * (float)audio.sampleRate() / (float)bufferSize);
-    
-    println("\nAudio source: " + audioFile + " " + audio.length() / 1000 + " seconds (" + hFrames + " frames)");
+    println("\nAudio source: " + audioFile + " " + audio.length() / 1000 + " seconds (" + frames + " frames)");
     println("Time size: " + bufferSize + " bytes / Sample rate: " + audio.sampleRate() / 1000f + "kHz");
     println("FFT bandwidth: " + (2.0 / bufferSize) * ((float)audio.sampleRate() / 2.0) + "Hz");
     
@@ -178,12 +176,9 @@ void openAudioFile(String audioFile) {
     fft = new FFT(fftBufferSize, audio.sampleRate());
     
     // Setup Arrays
-    spectrum = new float[fftSize];  // HUGE 200mb+
-    peak = new int[fftSize]; // HUGE 200mb+
-    
-    pitch = new boolean[hFrames][128];  // MIDI note was detected at this position
-    level = new float[hFrames][128];    // level of MIDI note at this position
-    pcp = new float[hFrames][12];       // PitchClassProfile at this frame
+    pitch = new boolean[frames][128];  // MIDI note was detected at this position
+    level = new float[frames][128];    // level of MIDI note at this position
+    pcp = new float[frames][12];       // PitchClassProfile at this frame
     
     precomputeOctaveRegions();
     //precomputeScale(); // disabled for now.
@@ -194,9 +189,17 @@ void openAudioFile(String audioFile) {
     // Switch back to general tab
     controlP5.window(this).activateTab("default");
     
-    frameNumber = 0;
+    frameNumber = -1;
     
     loadedAudioFile = audioFile;
     TRACK_LOADED = true;
     audio.play();
+}
+
+boolean isLoaded() {
+  if ( TRACK_LOADED && frameNumber > -1 ) {
+    return true;
+  } else {
+    return false;
+  }
 }

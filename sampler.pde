@@ -8,15 +8,15 @@ class Sampler implements AudioListener
     right = null;
   }
   
-  synchronized void samples(float[] samp) {
-    left = samp;
+  synchronized void samples(float[] sampleBuffer) {
+    left = sampleBuffer;
     
     process();
   }
   
-  synchronized void samples(float[] sampL, float[] sampR) {
-    left = sampL;
-    right = sampR;
+  synchronized void samples(float[] sampleBufferLeft, float[] sampleBufferRight) {  
+    left = sampleBufferLeft;
+    right = sampleBufferRight;
     
     // Apply balance to sample buffer storing in left mono buffer
     for ( int i = 0; i < bufferSize; i++ ) {
@@ -36,21 +36,20 @@ class Sampler implements AudioListener
   }
   
   void process() {
-    if ( frameNumber >= hFrames -1) { // track reached the end
-      audio.pause();
-      closeMIDINotes();
-    } else {
-      frameNumber++;
-      
+    if ( frameNumber < frames -1 ) {
       // need to apply the window transform before we zeropad
       window.transform(left); // add window to samples
     
       arrayCopy(left, 0, buffer, 0, left.length);
     
-      if ( TRACK_LOADED && audio.isPlaying() ) {
+      if ( audio.isPlaying() ) {
+        frameNumber++;
         analyze();
         outputMIDINotes();
-      }
+      } 
+    } else {
+      audio.pause();
+      closeMIDINotes();
     }
   }
   
@@ -78,8 +77,8 @@ class Sampler implements AudioListener
       boolean filterFreq = false;
   
       // Clear arrays that may have been pre populated before rewinding
-      level[frameNumber][freqToPitch(freq[k])] = 0;
-      pitch[frameNumber][freqToPitch(freq[k])] = false;
+      //level[frameNumber][freqToPitch(freq[k])] = 0;
+      //pitch[frameNumber][freqToPitch(freq[k])] = false;
   
       // Filter out frequncies from disabled octaves    
       for ( int i = 0; i < 8; i ++ ) {
@@ -191,5 +190,10 @@ class Sampler implements AudioListener
         }
       }
     }
+  }
+  
+  // draw routine needs to be synchronized otherwise it will run while buffers are being populated
+  synchronized void draw() { 
+    render();
   }
 }

@@ -5,6 +5,32 @@ import rwmidi.*;
 import controlP5.*;
 import java.lang.reflect.InvocationTargetException;
 
+//int bufferSize = 32768;
+//int bufferSize = 16384;
+//int bufferSize = 8192;
+//int bufferSize = 4096;
+int bufferSize = 2048;
+//int bufferSize = 1024;
+//int bufferSize = 512;
+
+// since we are dealing with small buffer sizes (1024) but are trying to detect peaks at low frequency ranges
+// octaves 0 .. 2 for example, zero padding is nessessary to improve the interpolation resolution of the FFT
+// otherwise FFT bins will be quite large making it impossible to distinguish between low octave notes which
+// are seperated by only a few Hz in these ranges.
+
+int ZERO_PAD_MULTIPLIER = 16; // zero padding adds interpolation resolution to the FFT 
+
+int fftBufferSize = bufferSize * ZERO_PAD_MULTIPLIER;
+int fftSize = fftBufferSize/2;
+
+float framesPerSecond = 25.0;
+
+int PEAK_THRESHOLD = 75; // default peak threshold
+
+// MIDI notes span from 0 - 128, octaves -1 -> 9. Specify start and end for piano
+int keyboardStart = 12; // 12 is octave C0
+int keyboardEnd = 108;
+
 String[] audioFiles;
 String loadedAudioFile;
 
@@ -28,32 +54,11 @@ FFT fft;
 
 MidiOutput midiOut;
 
-float framesPerSecond = 25.0;
-int frameNumber = 0;
-
+int frames; // total horizontal audio frames
+int frameNumber = -1; // current audio frame
 
 int cuePosition; // cue position in miliseconds
 int lastPosition = 0;
-
-//int bufferSize = 32768;
-//int bufferSize = 16384;
-//int bufferSize = 8192;
-//int bufferSize = 4096;
-int bufferSize = 1024;
-//int bufferSize = 512;
-
-int ZERO_PAD_MULTIPLIER = 16;
-
-int fftBufferSize = bufferSize * ZERO_PAD_MULTIPLIER;
-int fftSize = fftBufferSize/2;
-
-int PEAK_THRESHOLD = 75;
-
-// MIDI notes span from 0 - 128, octaves -1 -> 9. Specify start and end for piano
-int keyboardStart = 12; // 12 is octave C0
-int keyboardEnd = 108;
-
-int hFrames; // horizontal frames
 
 PImage bg;
 PImage whiteKey;
@@ -66,15 +71,15 @@ boolean[] keyboard = { true, false, true, false, true, true, false, true, false,
 color[] toneColor = { color(0, 200, 50), color(0, 100, 200), color(200, 100, 0), color(255, 0, 100), color(50, 150, 200), color(100, 0, 200), color(0, 255, 50), color(255, 80, 200), color(20, 100, 255), color(50, 200, 150), color(50, 160, 20), color(100, 255, 50) };
 
 float[] buffer = new float[fftBufferSize];
+float[] spectrum = new float[fftSize];
+int[] peak = new int[fftSize];
 
-float[] spectrum;
-int[] peak;
 
 boolean[][] pitch;
 float[][] level;
 float[][] pcp;
 
-int[] fftBinStart = new int[8];
+int[] fftBinStart = new int[8]; 
 int[] fftBinEnd = new int[8];
 
 float[] scaleProfile = new float[12];
@@ -82,7 +87,7 @@ float[] scaleProfile = new float[12];
 float linearEQIntercept = 1f; // default no eq boost
 float linearEQSlope = 0f; // default no slope boost
 
-// Toggles
+// Toggles and their defaults
 boolean SCALE_LOCK_TOGGLE = false;
 boolean PCP_TOGGLE = true;
 boolean EQUALIZER_TOGGLE = false;
@@ -120,6 +125,8 @@ void setup() {
   
   // Initialize Minim
   minim = new Minim(this);
+  
+  sampler = new Sampler();
   
   window = new Window();
   smoother = new Smooth();
@@ -275,7 +282,7 @@ void setup() {
 }
 
 void draw() {
-  render();
+  sampler.draw();
 }
 
 void stop() {

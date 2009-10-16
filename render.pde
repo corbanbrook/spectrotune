@@ -13,8 +13,8 @@ void render() {
     }
   }
   
-  if ( TRACK_LOADED ) {
-    // Render key presses for detected peaks
+  if ( isLoaded() ) {
+    // render key presses for detected peaks
     for ( int k = keyboardStart; k < keyboardEnd; k++ ) {
       if ( pitch[frameNumber][k] && keyboard[k%12]) {
         image(whiteKey, 10, height - ((k - keyboardStart) * keyHeight + keyHeight));
@@ -24,7 +24,7 @@ void render() {
       }
     }
     
-    // Render detected peaks
+    // render detected peaks
     noStroke();
     int keyLength = 10;
     int scroll = (frameNumber * keyLength > width) ? frameNumber - width/keyLength: 0;
@@ -46,36 +46,36 @@ void render() {
       }
     }
 
-    if ( audio.isPlaying() ) {
-      // Output text and MIDI
-      for ( int k = keyboardStart; k < keyboardEnd; k++ ) {
-        int octave = k / 12 - 1; // MIDI notes start at octave -1 so we need to subtrack 1 to get the actual octave
-        int semitone = k % 12;
-        
-        if ( pitch[frameNumber][k] ) {
-          textSize(10);
-          
-          fill(20);
-          text(semitones[semitone] + "" + octave, 24 + 1, height - ((k - keyboardStart) * keyHeight + keyHeight + 1));
-          
-          fill(140);
-          text(semitones[semitone] + "" + octave, 24, height - ((k - keyboardStart) * keyHeight + keyHeight + 2));
-        }
-      }
+    // output semitone text labels 
+    for ( int k = keyboardStart; k < keyboardEnd; k++ ) {
+      int octave = k / 12 - 1; // MIDI notes start at octave -1 so we need to subtrack 1 to get the actual octave
+      int semitone = k % 12;
       
+      if ( pitch[frameNumber][k] ) {
+        textSize(10);
+        
+        fill(20);
+        text(semitones[semitone] + "" + octave, 24 + 1, height - ((k - keyboardStart) * keyHeight + keyHeight + 1));
+        
+        fill(140);
+        text(semitones[semitone] + "" + octave, 24, height - ((k - keyboardStart) * keyHeight + keyHeight + 2));
+      }
+    }
+      
+    if ( audio.isPlaying() ) {
       // Update Progress bar
       float percentComplete = audio.position() / (float)audio.length() * 100;
       progressSlider.setValue(audio.position());
       progressSlider.setValueLabel(nf(round(percentComplete), 2) + "%");
       
       // Log FPS and % complete
-      if (frameNumber % 100 == 0 && audio.isPlaying() ) {
+      if ( frameNumber % 100 == 0 ) {
         println("  " + round(percentComplete) + "% complete (" + round(frameRate) + " fps)" + " frame #: " + frameNumber);
       }
-    } // end if audio.isPlaying
+    } // end if audio.isPlaying 
   } else {
     progressSlider.setValueLabel("NO FILE LOADED");
-  } // end if TRACK_LOADED
+  }
   
   // Render GUI pane
   fill(0, 200);
@@ -83,18 +83,24 @@ void render() {
  
   // Render Windowing curve
   if ( controlP5.window(this).currentTab().name() == "windowing" ) {
-    int windowX = 35;
-    int windowY = 110;
-    int windowHeight = 80;
-    stroke(100, 255, 240, 250);
-
-    float[] windowCurve = window.drawCurve();
-    for (int i = 0; i < windowCurve.length - 1; i++) {
-      line(i + windowX, windowY - windowCurve[i] * windowHeight, i+1 + windowX, windowY - windowCurve[i+1] * windowHeight);  
-    }
-    noStroke();
+    renderWindowCurve();
   }
  
   // Render Buildingsky logo on top of it all
   image(logo, 25, 254);
+}
+
+void renderWindowCurve() {
+  int windowX = 35;
+  int windowY = 110;
+  int windowHeight = 80;
+  stroke(255, 255, 255, 250);
+
+  float[] windowCurve = window.drawCurve();
+  
+  for (int i = 0; i < windowCurve.length - 1; i++) {
+    line(i + windowX, windowY - windowCurve[i] * windowHeight, i+1 + windowX, windowY - windowCurve[i+1] * windowHeight);  
+  }
+  
+  noStroke();
 }
