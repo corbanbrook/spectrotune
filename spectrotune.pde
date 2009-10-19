@@ -9,8 +9,8 @@ import java.lang.reflect.InvocationTargetException;
 //int bufferSize = 16384;
 //int bufferSize = 8192;
 //int bufferSize = 4096;
-int bufferSize = 2048;
-//int bufferSize = 1024;
+//int bufferSize = 2048;
+int bufferSize = 1024;
 //int bufferSize = 512;
 
 // since we are dealing with small buffer sizes (1024) but are trying to detect peaks at low frequency ranges
@@ -74,10 +74,10 @@ float[] buffer = new float[fftBufferSize];
 float[] spectrum = new float[fftSize];
 int[] peak = new int[fftSize];
 
-
 boolean[][] pitch;
-float[][] level;
 float[][] pcp;
+
+Note[][] notes;
 
 int[] fftBinStart = new int[8]; 
 int[] fftBinEnd = new int[8];
@@ -282,7 +282,7 @@ void setup() {
 }
 
 void draw() {
-  sampler.draw();
+  sampler.draw(); // synchronized
 }
 
 void stop() {

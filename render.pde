@@ -15,12 +15,12 @@ void render() {
   
   if ( isLoaded() ) {
     // render key presses for detected peaks
-    for ( int k = keyboardStart; k < keyboardEnd; k++ ) {
-      if ( pitch[frameNumber][k] && keyboard[k%12]) {
-        image(whiteKey, 10, height - ((k - keyboardStart) * keyHeight + keyHeight));
-      }
-      if ( pitch[frameNumber][k] && !keyboard[k%12]) {
-        image(blackKey, 10, height - ((k - keyboardStart) * keyHeight + keyHeight));
+    for ( int i = 0; i < notes[frameNumber].length; i++ ) {
+      Note note = notes[frameNumber][i];
+      if ( note.isWhiteKey() ) {
+        image(whiteKey, 10, height - ((note.pitch - keyboardStart) * keyHeight + keyHeight));
+      } else if ( note.isBlackKey() ) {
+        image(blackKey, 10, height - ((note.pitch - keyboardStart) * keyHeight + keyHeight));
       }
     }
     
@@ -28,38 +28,38 @@ void render() {
     noStroke();
     int keyLength = 10;
     int scroll = (frameNumber * keyLength > width) ? frameNumber - width/keyLength: 0;
-    for (int x = frameNumber; x >= scroll; x--) {
-      for (int k = keyboardStart; k < keyboardEnd; k++) {
-        if ( pitch[x][k] ) {
-          color noteColor;
-          if ( pcp[x][k % 12] == 1.0 ) {
-            noteColor = color(255, 100 * level[x][k]/400, 0);
-          } else {
-            noteColor = color(0, 255 * level[x][k]/400, 200);
-          }
-          fill(red(noteColor)/4, green(noteColor)/4, blue(noteColor)/4);
-          rect(abs(x - frameNumber) * keyLength + 24, height - ((k - keyboardStart) * keyHeight),abs(x - frameNumber) * keyLength + keyLength + 25 , height - ((k - keyboardStart) * keyHeight + keyHeight));
-          
-          fill(noteColor);
-          rect(abs(x - frameNumber) * keyLength + 24, height - ((k - keyboardStart) * keyHeight) - 1,abs(x - frameNumber) * keyLength + keyLength + 24 , height - ((k - keyboardStart) * keyHeight + keyHeight));
+
+    for ( int x = frameNumber; x >= scroll; x-- ) {
+      for ( int i = 0; i < notes[x].length; i++ ) {
+        Note note = notes[x][i];
+        
+        color noteColor;
+        
+        if ( pcp[x][note.pitch % 12] == 1.0 ) {
+          noteColor = color(255, 100 * note.amplitude / 400, 0);
+        } else {
+          noteColor = color(0, 255 * note.amplitude / 400, 200);
         }
+        
+        fill(red(noteColor)/4, green(noteColor)/4, blue(noteColor)/4);
+        rect(abs(x - frameNumber) * keyLength + 24, height - ((note.pitch - keyboardStart) * keyHeight), abs(x - frameNumber) * keyLength + keyLength + 25 , height - ((note.pitch - keyboardStart) * keyHeight + keyHeight));
+          
+        fill(noteColor);
+        rect(abs(x - frameNumber) * keyLength + 24, height - ((note.pitch - keyboardStart) * keyHeight) - 1, abs(x - frameNumber) * keyLength + keyLength + 24 , height - ((note.pitch - keyboardStart) * keyHeight + keyHeight));
       }
     }
 
     // output semitone text labels 
-    for ( int k = keyboardStart; k < keyboardEnd; k++ ) {
-      int octave = k / 12 - 1; // MIDI notes start at octave -1 so we need to subtrack 1 to get the actual octave
-      int semitone = k % 12;
+    textSize(10);
+    
+    for ( int i = 0; i < notes[frameNumber].length; i++ ) {
+      Note note = notes[frameNumber][i];
       
-      if ( pitch[frameNumber][k] ) {
-        textSize(10);
+      fill(20);
+      text(note.label(), 24 + 1, height - ((note.pitch - keyboardStart) * keyHeight + keyHeight + 1));
         
-        fill(20);
-        text(semitones[semitone] + "" + octave, 24 + 1, height - ((k - keyboardStart) * keyHeight + keyHeight + 1));
-        
-        fill(140);
-        text(semitones[semitone] + "" + octave, 24, height - ((k - keyboardStart) * keyHeight + keyHeight + 2));
-      }
+      fill(140);
+      text(note.label(), 24, height - ((note.pitch - keyboardStart) * keyHeight + keyHeight + 2));
     }
       
     if ( audio.isPlaying() ) {

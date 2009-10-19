@@ -1,32 +1,40 @@
+Note[] notesOpen = new Note[128];
+
 void outputMIDINotes() {
   if ( MIDI_TOGGLE ) {
-    for ( int k = keyboardStart; k < keyboardEnd; k++ ) {
-      int octave = k / 12 - 1; // MIDI notes start at octave -1 so we need to subtrack 1 to get the actual octave
-      int semitone = k % 12;
-      
-      // send NoteOn
-      if ( OCTAVE_TOGGLE[octave] ) {
-        if ( pitch[frameNumber][k] ) {
-          if ( frameNumber > 0 && !pitch[frameNumber-1][k] ) {
-            midiOut.sendNoteOn(OCTAVE_CHANNEL[octave], k, 90);
-          } else if ( frameNumber == 0 && pitch[0][k] ) {
-            midiOut.sendNoteOn(OCTAVE_CHANNEL[octave], k, 90);
+    // send NoteOns
+    for ( int i = 0; i < notes[frameNumber].length; i++ ) {
+      Note note = notes[frameNumber][i];
+      if ( OCTAVE_TOGGLE[note.octave] && notesOpen[note.pitch] == null) {
+        midiOut.sendNoteOn(note.channel, note.pitch, 90);
+        notesOpen[note.pitch] = note;
+      }
+    }
+    
+    // send NoteOffs   
+    for ( int i = 0; i < notesOpen.length; i++ ) {
+      boolean isOpen = false;
+      if ( notesOpen[i] != null ) {
+        for ( int j = 0; j < notes[frameNumber].length; j++ ) {
+          if ( notes[frameNumber][j].pitch == i ) {
+            isOpen = true;
           }
         }
-      }
-      
-      // send NoteOff
-      if ( frameNumber > 0 && pitch[frameNumber -1][k] && !pitch[frameNumber][k] ) { // was on now its not
-        midiOut.sendNoteOff(OCTAVE_CHANNEL[octave], k, 90);
+        if ( !isOpen ) {
+          midiOut.sendNoteOff(notesOpen[i].channel, i, 90);
+          notesOpen[i] = null;
+        }
       }
     }
   }
 }
 
-void closeMIDINotes() {
-  for ( int k = keyboardStart; k < keyboardEnd; k++ ) {
-    int octave = k / 12 - 1;
-    midiOut.sendNoteOff(OCTAVE_CHANNEL[octave], k, 90);
+void closeMIDINotes() {  
+  for ( int i = 0; i < notesOpen.length; i++ ) {
+    if ( notesOpen[i] != null ) {
+      midiOut.sendNoteOff(notesOpen[i].channel, i, 90);
+      notesOpen[i] = null;
+    }
   }
 }
 

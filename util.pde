@@ -79,7 +79,8 @@ void precomputeOctaveRegions() {
   println("Start: " + fftBinStart[0] + " End: " + fftBinEnd[7] + " (" + fftSize + " total)");
 }
 
-// TODO: Not sure how to precompute the scale with an AudioPlayer. Might need to load up peices of the audio file in a buffer first.
+// TODO: Not sure how to precompute the scale with an AudioPlayer.
+// Might need to load up peices of the audio file in a buffer first.
 void precomputeScale() {
   float freqLowRange = octaveLowRange(0);
   float freqHighRange = octaveHighRange(8);
@@ -92,25 +93,7 @@ void precomputeScale() {
     //arraycopy(audio.getChannel(BufferedAudio.LEFT), offset, buffer, 0, bufferSize);
     
     fft.forward(buffer);
-    
-    /* 
-    // Normalize each octave before adding to ScaleProfile semitone bin
-    for ( int j = 0; j < 8; j++ ) {
-      float octaveMax = 0;
-      for ( int k = fftBinStart[j]; k < fftBinEnd[j]; k++ ) {
-        float freq = k / (float)bufferSize * audio.sampleRate();
-        if ( octaveMax < fft.getBand(k) ) {
-          octaveMax = fft.getBand(k);
-        }        
-      }
-      for ( int k = fftBinStart[j]; k < fftBinEnd[j]; k++ ) {
-        float freq = k / (float)bufferSize * audio.sampleRate();
-        scaleProfile[freqToPitch(freq) % 12] += (fft.getBand(k) / octaveMax);
-      }
-    }
-    */
-    
-    // Un-normalized method -- think it works better
+
     for ( int k = 0; k < fftSize; k++ ) {
       float freq = k / (float)bufferSize * audio.sampleRate();
       scaleProfile[freqToPitch(freq) % 12] += (fft.getBand(k));
@@ -143,57 +126,57 @@ void precomputeScale() {
 }
 
 void openAudioFile(String audioFile) {
-    if ( TRACK_LOADED ) {
-      audio.pause();
-      audio.close();
-      
-      loadedAudioFile = "";
-      
-      progressSlider.setValue(0);
-      progressSlider.setMax(0);
-     
-      TRACK_LOADED = false; 
-    }
+  if ( TRACK_LOADED ) {
+    audio.pause();
+    audio.close();
+    
+    loadedAudioFile = "";
+    
+    progressSlider.setValue(0);
+    progressSlider.setMax(0);
    
-    audio = minim.loadFile(sketchPath + "/music/" + audioFile, bufferSize);
-    
-    
-    
-    audio.addListener(sampler);
-    
-    frames = round((float)audio.length() / 1000f * (float)audio.sampleRate() / (float)bufferSize);
-    
-    println("\nAudio source: " + audioFile + " " + audio.length() / 1000 + " seconds (" + frames + " frames)");
-    println("Time size: " + bufferSize + " bytes / Sample rate: " + audio.sampleRate() / 1000f + "kHz");
-    println("FFT bandwidth: " + (2.0 / bufferSize) * ((float)audio.sampleRate() / 2.0) + "Hz");
-    
-    if (audio.type() == Minim.STEREO) {      
-      println("Channels: 2 (STEREO)\n");
-    } else {
-      println("Channels: 1 (MONO)\n");
-    }
-    
-    fft = new FFT(fftBufferSize, audio.sampleRate());
-    
-    // Setup Arrays
-    pitch = new boolean[frames][128];  // MIDI note was detected at this position
-    level = new float[frames][128];    // level of MIDI note at this position
-    pcp = new float[frames][12];       // PitchClassProfile at this frame
-    
-    precomputeOctaveRegions();
-    //precomputeScale(); // disabled for now.
-    
-    progressSlider.setMax(audio.length());
-    cuePosition = audio.position();
-    
-    // Switch back to general tab
-    controlP5.window(this).activateTab("default");
-    
-    frameNumber = -1;
-    
-    loadedAudioFile = audioFile;
-    TRACK_LOADED = true;
-    audio.play();
+    TRACK_LOADED = false; 
+  }
+ 
+  audio = minim.loadFile(sketchPath + "/music/" + audioFile, bufferSize);
+  
+  audio.addListener(sampler);
+  
+  frames = round((float)audio.length() / 1000f * (float)audio.sampleRate() / (float)bufferSize);
+  
+  println("\nAudio source: " + audioFile + " " + audio.length() / 1000 + " seconds (" + frames + " frames)");
+  println("Time size: " + bufferSize + " bytes / Sample rate: " + audio.sampleRate() / 1000f + "kHz");
+  println("FFT bandwidth: " + (2.0 / bufferSize) * ((float)audio.sampleRate() / 2.0) + "Hz");
+  
+  if (audio.type() == Minim.STEREO) {      
+    println("Channels: 2 (STEREO)\n");
+  } else {
+    println("Channels: 1 (MONO)\n");
+  }
+  
+  fft = new FFT(fftBufferSize, audio.sampleRate());
+  
+  // Setup Arrays
+  notes = new Note[frames][0];
+  pcp = new float[frames][12];
+  
+  pitch = new boolean[frames][128];
+  //level = new float[frames][128];
+  
+  precomputeOctaveRegions();
+  //precomputeScale(); // disabled for now.
+  
+  progressSlider.setMax(audio.length());
+  cuePosition = audio.position();
+  
+  // Switch back to general tab
+  controlP5.window(this).activateTab("default");
+  
+  frameNumber = -1;
+  
+  loadedAudioFile = audioFile;
+  TRACK_LOADED = true;
+  audio.play();
 }
 
 boolean isLoaded() {

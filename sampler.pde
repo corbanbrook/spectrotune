@@ -77,8 +77,6 @@ class Sampler implements AudioListener
       boolean filterFreq = false;
   
       // Clear arrays that may have been pre populated before rewinding
-      //level[frameNumber][freqToPitch(freq[k])] = 0;
-      //pitch[frameNumber][freqToPitch(freq[k])] = false;
   
       // Filter out frequncies from disabled octaves    
       for ( int i = 0; i < 8; i ++ ) {
@@ -180,8 +178,8 @@ class Sampler implements AudioListener
           peak[k] = HARMONIC;
         } else {
           peak[k] = PEAK;
-          pitch[frameNumber][freqToPitch(freq[k])] = true;
-          level[frameNumber][freqToPitch(freq[k])] = spectrum[k];
+          
+          notes[frameNumber] = (Note[])append(notes[frameNumber], new Note(freq[k], spectrum[k]));
           
           // Track Peaks and Levels in this pass so we can detect harmonics 
           foundPeak = append(foundPeak, freq[k]);
