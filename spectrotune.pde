@@ -66,15 +66,10 @@ PImage blackKey;
 PImage octaveBtn;
 PImage logo;
 
-String[] semitones = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
-boolean[] keyboard = { true, false, true, false, true, true, false, true, false, true, false, true };
-color[] toneColor = { color(0, 200, 50), color(0, 100, 200), color(200, 100, 0), color(255, 0, 100), color(50, 150, 200), color(100, 0, 200), color(0, 255, 50), color(255, 80, 200), color(20, 100, 255), color(50, 200, 150), color(50, 160, 20), color(100, 255, 50) };
-
 float[] buffer = new float[fftBufferSize];
 float[] spectrum = new float[fftSize];
 int[] peak = new int[fftSize];
 
-boolean[][] pitch;
 float[][] pcp;
 
 Note[][] notes;

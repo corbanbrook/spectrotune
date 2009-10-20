@@ -1,3 +1,6 @@
+static final String[] semitones = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+static final boolean[] keyboard = { true, false, true, false, true, true, false, true, false, true, false, true };
+
 class Note {
   float frequency;
   float amplitude;

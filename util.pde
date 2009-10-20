@@ -119,7 +119,6 @@ void precomputeScale() {
     }
     if ( inScale ) {
       scaleProfile[i] = 1.2; // boost by 20%
-      print(semitones[i] + " ");
     }
   } 
   println("\nDone computing scale. " + computedFrames + "/" + frames);
@@ -159,9 +158,6 @@ void openAudioFile(String audioFile) {
   // Setup Arrays
   notes = new Note[frames][0];
   pcp = new float[frames][12];
-  
-  pitch = new boolean[frames][128];
-  //level = new float[frames][128];
   
   precomputeOctaveRegions();
   //precomputeScale(); // disabled for now.
