@@ -62,7 +62,7 @@ class Sampler implements AudioListener
     float[] freq = new float[fftSize];
       
     float freqLowRange = octaveLowRange(0);
-    float freqHighRange = octaveHighRange(8);
+    float freqHighRange = octaveHighRange(7);
     
     boolean peakset = false;
     
