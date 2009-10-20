@@ -3,13 +3,40 @@ import ddf.minim.*;
 import ddf.minim.analysis.*;
 import rwmidi.*;
 import controlP5.*;
+import java.lang.reflect.InvocationTargetException;
+
+//int bufferSize = 32768;
+//int bufferSize = 16384;
+//int bufferSize = 8192;
+//int bufferSize = 4096;
+//int bufferSize = 2048;
+int bufferSize = 1024;
+//int bufferSize = 512;
+
+// since we are dealing with small buffer sizes (1024) but are trying to detect peaks at low frequency ranges
+// octaves 0 .. 2 for example, zero padding is nessessary to improve the interpolation resolution of the FFT
+// otherwise FFT bins will be quite large making it impossible to distinguish between low octave notes which
+// are seperated by only a few Hz in these ranges.
+
+int ZERO_PAD_MULTIPLIER = 16; // zero padding adds interpolation resolution to the FFT 
+
+int fftBufferSize = bufferSize * ZERO_PAD_MULTIPLIER;
+int fftSize = fftBufferSize/2;
+
+float framesPerSecond = 25.0;
+
+int PEAK_THRESHOLD = 75; // default peak threshold
+
+// MIDI notes span from 0 - 128, octaves -1 -> 9. Specify start and end for piano
+int keyboardStart = 12; // 12 is octave C0
+int keyboardEnd = 108;
 
 String[] audioFiles;
 String loadedAudioFile;
 
 Minim minim;
-AudioSample audio;
-AudioPlayer player;
+AudioPlayer audio;
+Sampler sampler;
 ControlP5 controlP5;
 Window window;
 Smooth smoother;
@@ -20,8 +47,6 @@ Tab tabSmoothing;
 Tab tabMIDI;
 Tab tabFiles;
 
-String SELECTED_TAB;
-
 Slider progressSlider;
 Slider balanceSlider;
 
@@ -29,23 +54,11 @@ FFT fft;
 
 MidiOutput midiOut;
 
-float framesPerSecond = 25.0;
-int frameNumber = 0;
+int frames; // total horizontal audio frames
+int frameNumber = -1; // current audio frame
 
-//int bufferSize = 32768;
-int bufferSize = 16384; // needs to be high for fft accuracy at lower octaves
-//int bufferSize = 8192;
-//int bufferSize = 512;
-int fftSize = bufferSize/2;
-
-int PEAK_THRESHOLD = 75;
-
-int hFrames; // horizontal frames
-
-// High resolution spectrograph image
-PImage spectrograph;
-int spectrographHeight;
-int spectrographWidth;
+int cuePosition; // cue position in miliseconds
+int lastPosition = 0;
 
 PImage bg;
 PImage whiteKey;
@@ -53,21 +66,15 @@ PImage blackKey;
 PImage octaveBtn;
 PImage logo;
 
-String[] semitones = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
-boolean[] keyboard = { true, false, true, false, true, true, false, true, false, true, false, true };
-color[] toneColor = { color(0, 200, 50), color(0, 100, 200), color(200, 100, 0), color(255, 0, 100), color(50, 150, 200), color(100, 0, 200), color(0, 255, 50), color(255, 80, 200), color(20, 100, 255), color(50, 200, 150), color(50, 160, 20), color(100, 255, 50) };
+float[] buffer = new float[fftBufferSize];
+float[] spectrum = new float[fftSize];
+int[] peak = new int[fftSize];
 
-float[] buffer = new float[bufferSize];
-float[] bufferLeft = new float[bufferSize];
-float[] bufferRight = new float[bufferSize];
-
-float[][] spectrum;
-int[][] peak;
-boolean[][] pitch;
-float[][] level;
 float[][] pcp;
 
-int[] fftBinStart = new int[8];
+Note[][] notes;
+
+int[] fftBinStart = new int[8]; 
 int[] fftBinEnd = new int[8];
 
 float[] scaleProfile = new float[12];
@@ -75,13 +82,13 @@ float[] scaleProfile = new float[12];
 float linearEQIntercept = 1f; // default no eq boost
 float linearEQSlope = 0f; // default no slope boost
 
-// Toggles
+// Toggles and their defaults
 boolean SCALE_LOCK_TOGGLE = false;
 boolean PCP_TOGGLE = true;
 boolean EQUALIZER_TOGGLE = false;
 boolean HARMONICS_TOGGLE = true;
+boolean MIDI_TOGGLE = true;
 boolean SMOOTH_TOGGLE = true;
-//int SMOOTH_TYPE = FFT.TRIANGLE;
 int SMOOTH_POINTS = 3;
 
 boolean UNIFORM_TOGGLE = true;
@@ -91,7 +98,6 @@ boolean QUADRATIC_TOGGLE = false;
 boolean EXPONENTIAL_TOGGLE = false;
 
 boolean TRACK_LOADED = false;
-boolean PLAYING = false;
 
 boolean[] OCTAVE_TOGGLE = {false, true, true, true, true, true, true, true};
 int[] OCTAVE_CHANNEL = {0,0,0,0,0,0,0,0}; // set all octaves to channel 0 (0-indexed channel 1)
@@ -106,7 +112,8 @@ public static final int SLOPEDOWN = 5;
 
 void setup() {
   size(510, 288, OPENGL);
-  frameRate(framesPerSecond); // lock framerate
+  
+  //frameRate(framesPerSecond); // lock framerate
   
   // Create MIDI output interface - select the first found device by default
   midiOut = RWMidi.getOutputDevices()[0].createOutput();
@@ -114,19 +121,17 @@ void setup() {
   // Initialize Minim
   minim = new Minim(this);
   
+  sampler = new Sampler();
+  
   window = new Window();
   smoother = new Smooth();
-
-  /* DISABLED
-  // Create spectrograph image
-  spectrographWidth = hFrames;
-  spectrographHeight = 1024; // or fftSize
-  spectrograph = createImage(spectrographWidth, spectrographHeight, RGB);
-  */
+  
+  // zero pad the buffer
+  zeroPadBuffer();
   
   // Equalizer settings. Need a tab for this.
-  linearEQIntercept = 0.9f;
-  linearEQSlope = 0.01f;
+  //linearEQIntercept = 1f;
+  //linearEQSlope = 0.001f;
   
   // Logo UI Images
   bg = loadImage("background.png");
@@ -134,7 +139,6 @@ void setup() {
   blackKey = loadImage("blackkey.png");
   octaveBtn = loadImage("octavebutton.png");
   logo = loadImage("buildingsky.png");
-  
    
   // ControlP5 UI
   controlP5 = new ControlP5(this);
@@ -169,7 +173,7 @@ void setup() {
   // FFT bin distance weighting radios
   //controlP5.addTextlabel("labelWeight", "FFT WEIGHT", 380, 130);
   Radio radioWeight = controlP5.addRadio("radioWeight", 380, 160);
-  radioWeight.add("UNIFORM", UNIFORM); // default
+  radioWeight.add("UNIFORM (OFF)", UNIFORM); // default
   radioWeight.add("DISCRETE", DISCRETE);
   radioWeight.add("LINERAR", LINEAR);
   radioWeight.add("QUADRATIC", QUADRATIC);
@@ -189,15 +193,20 @@ void setup() {
   // MIDI TAB
   controlP5.addTextlabel("labelMIDI", "MIDI", 380, 10).moveTo(tabMIDI);
   
-  Numberbox oct0 = controlP5.addNumberbox("oct0", 1, 380, 30, 20, 14);
-  Numberbox oct1 = controlP5.addNumberbox("oct1", 1, 410, 30, 20, 14); 
-  Numberbox oct2 = controlP5.addNumberbox("oct2", 1, 440, 30, 20, 14);
-  Numberbox oct3 = controlP5.addNumberbox("oct3", 1, 470, 30, 20, 14);
+  // MIDI output toggle
+  Toggle toggleMIDI = controlP5.addToggle("toggleMIDI", MIDI_TOGGLE, 380, 30, 10,10);
+  toggleMIDI.setLabel("MIDI OUTPUT");
+  toggleMIDI.moveTo(tabMIDI);
   
-  Numberbox oct4 = controlP5.addNumberbox("oct4", 1, 380, 60, 20, 14);
-  Numberbox oct5 = controlP5.addNumberbox("oct5", 1, 410, 60, 20, 14); 
-  Numberbox oct6 = controlP5.addNumberbox("oct6", 1, 440, 60, 20, 14);
-  Numberbox oct7 = controlP5.addNumberbox("oct7", 1, 470, 60, 20, 14);
+  Numberbox oct0 = controlP5.addNumberbox("oct0", 1, 380, 60, 20, 14);
+  Numberbox oct1 = controlP5.addNumberbox("oct1", 1, 410, 60, 20, 14); 
+  Numberbox oct2 = controlP5.addNumberbox("oct2", 1, 440, 60, 20, 14);
+  Numberbox oct3 = controlP5.addNumberbox("oct3", 1, 470, 60, 20, 14);
+  
+  Numberbox oct4 = controlP5.addNumberbox("oct4", 1, 380, 90, 20, 14);
+  Numberbox oct5 = controlP5.addNumberbox("oct5", 1, 410, 90, 20, 14); 
+  Numberbox oct6 = controlP5.addNumberbox("oct6", 1, 440, 90, 20, 14);
+  Numberbox oct7 = controlP5.addNumberbox("oct7", 1, 470, 90, 20, 14);
   
   // move MIDI Channels to midi tab
   oct0.moveTo(tabMIDI);
@@ -219,19 +228,20 @@ void setup() {
   controlP5.addTextlabel("labelWindowing", "WINDOWING", 380, 10).moveTo(tabWindowing);
 
   Radio radioWindow = controlP5.addRadio("radioWindow", 380, 30);
-  radioWindow.add("RECTANGULAR", Window.RECTANGULAR); // default
+  radioWindow.add("RECTANGULAR", Window.RECTANGULAR);
   radioWindow.add("HAMMING", Window.HAMMING);
   radioWindow.add("HANN", Window.HANN);
   radioWindow.add("COSINE", Window.COSINE);
   radioWindow.add("TRIANGULAR", Window.TRIANGULAR);
   radioWindow.add("BLACKMAN", Window.BLACKMAN);
   radioWindow.moveTo(tabWindowing);
+  //radioWindow.activate("HAMMING"); // set default
   
   controlP5.addTextlabel("labelSmoothing", "SMOOTHING", 380, 10).moveTo(tabSmoothing);
   
   Radio radioSmooth = controlP5.addRadio("radioSmooth", 380, 30);
   radioSmooth.add("NONE", Smooth.NONE);
-  radioSmooth.add("RECTANGLE", Smooth.RECTANGLE); // default
+  radioSmooth.add("RECTANGLE", Smooth.RECTANGLE);
   radioSmooth.add("TRIANGLE", Smooth.TRIANGLE);
   radioSmooth.add("AJACENT AVERAGE", Smooth.ADJAVG);
   radioSmooth.moveTo(tabSmoothing);
@@ -253,14 +263,13 @@ void setup() {
     }
   }
   
-  // GLOBAL
+  // GLOBAL UI
   
   // Progress bar 
   progressSlider = controlP5.addSlider("Progress", 0, 0, 0, 380, height - 20, 75, 10);
   progressSlider.setId(3);
   progressSlider.moveTo("global"); // always show no matter what tab is selected
-    
- 
+      
   textFont(createFont("Arial", 10, true));
   
   rectMode(CORNERS);
@@ -268,13 +277,18 @@ void setup() {
 }
 
 void draw() {
-  if ( TRACK_LOADED && PLAYING ){ // only analyze when playing
-    analyze(); 
-  }
-  render(); // There are still some stuff to render even if the track paused or ended
+  sampler.draw(); // synchronized
 }
 
 void stop() {
+  if ( audio != null ) {
+    audio.pause();
+    TRACK_LOADED = false;
+    audio.close();
+  }
+  
+  closeMIDINotes(); // close any open MIDI notes
+  
   minim.stop();
   super.stop();
 }

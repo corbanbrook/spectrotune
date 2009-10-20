@@ -1,22 +1,28 @@
 void keyPressed() {
   switch(key) {
-    case ' ': // save spectrograph and quit
+    case ' ': // pause/play toggle
       if ( TRACK_LOADED ) {
-        PLAYING = !PLAYING;
-        if ( !PLAYING ) {
+        if ( audio.isPlaying() ) {
           progressSlider.setValueLabel("PAUSED");
+          audio.pause();
+          closeMIDINotes();
+        } else {
+          progressSlider.setValueLabel("PLAYING");
+          audio.play();
         }
       }
       break;
-    
-    /* case 's': // save spectrograph and quit
-      saveSpectrograph();
-      exit();
-      break; */
+      
+    case 'm': // mute toggle
+      if ( audio.isMuted() ) {
+        audio.unmute();
+      } else {
+        audio.mute();
+      }
+      break;
     
     case 'e': // turn equalizer on/off
       EQUALIZER_TOGGLE = !EQUALIZER_TOGGLE;
-      //fft.equalizer(EQUALIZER_TOGGLE);
       break;
     
     case 'p': // turn PCP on/off
@@ -87,19 +93,26 @@ void controlEvent(ControlEvent event) {
       case(2):
         break;
       case(3): // Progress Slider
-        PLAYING = true;
-        frameNumber = (int)(event.controller().value());
+        // This event is triggered whenever the slider is updated. It is a progress bar updated every buffer iteration.
+        cuePosition = (int)(event.controller().value());
+        
+        if ( cuePosition < lastPosition || cuePosition - lastPosition > 2000 ) { // seeked backwards or forwards
+          audio.pause();
+          closeMIDINotes();
+          frameNumber = round((float)cuePosition / 1000f * (float)audio.sampleRate() / (float)bufferSize);
+          audio.cue(cuePosition);
+          audio.play(); 
+        }
+        
+        lastPosition = cuePosition;
+
         break;
     }
     
     // File List IDs
     if ( event.controller().id() >= 100 ) {
       openAudioFile(audioFiles[(int)event.controller().value()]);
-    
-      PLAYING = true;
     }
-  } else if ( event.isTab() ) {
-    SELECTED_TAB = event.name();
   }
 }
 
@@ -121,6 +134,13 @@ void radioSmooth(int mode) {
 
 void togglePCP(boolean flag) {
   PCP_TOGGLE = flag;
+}
+
+void toggleMIDI(boolean flag) {
+  MIDI_TOGGLE = flag;
+  if ( ! MIDI_TOGGLE ) {
+    closeMIDINotes();
+  }
 }
 
 void toggleScaleLock(boolean flag) {
@@ -182,5 +202,3 @@ void balance(int value) {
     balanceSlider.setValueLabel(value + "% RIGHT");
   }
 }
-
-

@@ -49,58 +49,6 @@ float binWeight(int type, float x) {
   }
 }
 
-/*
-// Save an image of the spectrograph
-void saveSpectrograph() {
-  for ( int x = 0; x < frameNumber; x++ ) {
-    // write spectrum array to PImage then save.
-    for ( int y = 0; y < fftSize; y++ ) {
-      color c = color(255.0 * spectrum[x][y] / 300, 255.0 * spectrum[x][y] * 10 / 300 , 255.0 * spectrum[x][y] * 20 / 300);
-
-      spectrograph.set(x,spectrographHeight - y, c);
-                
-      switch ( peak[x][y] ) {
-        case PEAK:
-          spectrograph.set(x, spectrographHeight -y, color(255, 0, 100));
-          break;  
-        case VALLEY: 
-          //img.set(x, imgHeight -y, color(0, 0, 0));
-          break;
-        case HARMONIC:
-          spectrograph.set(x, spectrographHeight -y, color(255, 200, 0));
-          break;
-      }
-    }
-  }
-    
-  spectrograph.save("spectrograph.png");
-  println("spectrograph saved.");
-} */
-
-void switchLabel(boolean toggle, String label, int pos) {
-  pos *= 12;
-  pos += 10;
-  if (toggle) {
-    fill(200, 255, 255);
-  } else {
-    fill(80, 200);
-  }
-  text(label, width - 120, pos);
-  rect(width - 120 - 10, - 7 + pos, width - 120  - 5, pos);
-}
-
-void valLabel(int val, String label, int pos) {
-  pos *= 12;
-  pos += 10;
-
-  fill(255, 255, 100);
-  
-  text(label, width - 120, pos);
-  
-  fill(255, 160, 60);
-  text(val, width -50, pos);
-}
-
 void normalizePCP() {
   float pcpMax = max(pcp[frameNumber]);
   for ( int k = 0; k < 12; k++ ) {
@@ -108,12 +56,18 @@ void normalizePCP() {
   }
 }
 
+void zeroPadBuffer() {
+  for (int i = 0; i < fftBufferSize; i++) {
+    buffer[i] = 0f;
+  }  
+}
+
 void precomputeOctaveRegions() {
   for ( int j = 0; j < 8; j++) {
     fftBinStart[j] = 0;
     fftBinEnd[j] = 0;
     for ( int k = 0; k < fftSize; k++) {
-      float freq = k / (float)bufferSize * audio.sampleRate();
+      float freq = k / (float)fftBufferSize * audio.sampleRate();
       if ( freq >= octaveLowRange(j) && fftBinStart[j] == 0 ) {
         fftBinStart[j] = k;
       } else if ( freq > octaveHighRange(j) && fftBinEnd[j] == 0 ) {
@@ -125,37 +79,21 @@ void precomputeOctaveRegions() {
   println("Start: " + fftBinStart[0] + " End: " + fftBinEnd[7] + " (" + fftSize + " total)");
 }
 
+// TODO: Not sure how to precompute the scale with an AudioPlayer.
+// Might need to load up peices of the audio file in a buffer first.
 void precomputeScale() {
   float freqLowRange = octaveLowRange(0);
   float freqHighRange = octaveHighRange(8);
   float[] bins = new float[fftSize];
   int computedFrames = 0;
-  for ( int i = hFrames/2; i < hFrames; i++ ) {
-    if ( i > hFrames * 0.75 ) { break; } 
+  for ( int i = frames/2; i < frames; i++ ) {
+    if ( i > frames * 0.75 ) { break; } 
     
     int offset = (int)(i * audio.sampleRate() / framesPerSecond);
-    arraycopy(audio.getChannel(BufferedAudio.LEFT), offset, buffer, 0, bufferSize);
+    //arraycopy(audio.getChannel(BufferedAudio.LEFT), offset, buffer, 0, bufferSize);
     
     fft.forward(buffer);
-    
-    /* 
-    // Normalize each octave before adding to ScaleProfile semitone bin
-    for ( int j = 0; j < 8; j++ ) {
-      float octaveMax = 0;
-      for ( int k = fftBinStart[j]; k < fftBinEnd[j]; k++ ) {
-        float freq = k / (float)bufferSize * audio.sampleRate();
-        if ( octaveMax < fft.getBand(k) ) {
-          octaveMax = fft.getBand(k);
-        }        
-      }
-      for ( int k = fftBinStart[j]; k < fftBinEnd[j]; k++ ) {
-        float freq = k / (float)bufferSize * audio.sampleRate();
-        scaleProfile[freqToPitch(freq) % 12] += (fft.getBand(k) / octaveMax);
-      }
-    }
-    */
-    
-    // Un-normalized method -- think it works better
+
     for ( int k = 0; k < fftSize; k++ ) {
       float freq = k / (float)bufferSize * audio.sampleRate();
       scaleProfile[freqToPitch(freq) % 12] += (fft.getBand(k));
@@ -181,49 +119,66 @@ void precomputeScale() {
     }
     if ( inScale ) {
       scaleProfile[i] = 1.2; // boost by 20%
-      print(semitones[i] + " ");
     }
   } 
-  println("\nDone computing scale. " + computedFrames + "/" + hFrames);
+  println("\nDone computing scale. " + computedFrames + "/" + frames);
 }
 
 void openAudioFile(String audioFile) {
-    audio = minim.loadSample(sketchPath + "/music/" + audioFile, bufferSize);
-    //player = minim.loadFile(sketchPath + "/music/" + audioFile, bufferSize);
-    //player.play();
+  if ( TRACK_LOADED ) {
+    audio.pause();
+    audio.close();
     
-    hFrames = int(audio.length() / 1000.0 * framesPerSecond);
-    println("\nAudio source: " + audioFile + " " + audio.length() / 1000 + " seconds (" + hFrames + " frames)");
-    println("Time size: " + bufferSize + " bytes / Sample rate: " + audio.sampleRate() / 1000.0 + "kHz");
-    println("FFT bandwidth: " + (2.0 / bufferSize) * ((float)audio.sampleRate() / 2.0) + "Hz");
+    loadedAudioFile = "";
     
-    if (audio.type() == Minim.STEREO) {      
-      println("Channels: 2 (STEREO)\n");
-    } else {
-      println("Channels: 1 (MONO)\n");
-    }
-    
-    fft = new FFT(bufferSize, audio.sampleRate());
-    //fft.window(FFT.HAMMING);
-    
-    // Setup Arrays
-    spectrum = new float[hFrames][fftSize];
-    peak = new int[hFrames][fftSize];
-    pitch = new boolean[hFrames][128];
-    level = new float[hFrames][128];
-    pcp = new float[hFrames][12];
-    
-    precomputeOctaveRegions();
-    //precomputeScale();
-    
-    progressSlider.setMax(hFrames);
-    
-    frameNumber = 0;
-    
-    loadedAudioFile = audioFile;
-    TRACK_LOADED = true;
-    
-    // Switch back to general tab
-    tabFiles.setActive(false);
-    tabDefault.setActive(true);
+    progressSlider.setValue(0);
+    progressSlider.setMax(0);
+   
+    TRACK_LOADED = false; 
+  }
+ 
+  audio = minim.loadFile(sketchPath + "/music/" + audioFile, bufferSize);
+  
+  audio.addListener(sampler);
+  
+  frames = round((float)audio.length() / 1000f * (float)audio.sampleRate() / (float)bufferSize);
+  
+  println("\nAudio source: " + audioFile + " " + audio.length() / 1000 + " seconds (" + frames + " frames)");
+  println("Time size: " + bufferSize + " bytes / Sample rate: " + audio.sampleRate() / 1000f + "kHz");
+  println("FFT bandwidth: " + (2.0 / bufferSize) * ((float)audio.sampleRate() / 2.0) + "Hz");
+  
+  if (audio.type() == Minim.STEREO) {      
+    println("Channels: 2 (STEREO)\n");
+  } else {
+    println("Channels: 1 (MONO)\n");
+  }
+  
+  fft = new FFT(fftBufferSize, audio.sampleRate());
+  
+  // Setup Arrays
+  notes = new Note[frames][0];
+  pcp = new float[frames][12];
+  
+  precomputeOctaveRegions();
+  //precomputeScale(); // disabled for now.
+  
+  progressSlider.setMax(audio.length());
+  cuePosition = audio.position();
+  
+  // Switch back to general tab
+  controlP5.window(this).activateTab("default");
+  
+  frameNumber = -1;
+  
+  loadedAudioFile = audioFile;
+  TRACK_LOADED = true;
+  audio.play();
+}
+
+boolean isLoaded() {
+  if ( TRACK_LOADED && frameNumber > -1 ) {
+    return true;
+  } else {
+    return false;
+  }
 }

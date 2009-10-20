@@ -1,35 +1,59 @@
-void analyze() {
-  int offset = (int)(frameNumber * audio.sampleRate() / framesPerSecond);
+class Sampler implements AudioListener
+{
+  private float[] left;
+  private float[] right;
+  
+  Sampler() {
+    left = null; 
+    right = null;
+  }
+  
+  synchronized void samples(float[] sampleBuffer) {
+    left = sampleBuffer;
     
-  if ( offset + bufferSize > audio.getChannel(BufferedAudio.LEFT).length ) { // Reached the end of the audio track
-    PLAYING = false;
-  } else {
-    if ( audio.type() == Minim.STEREO ) {
-      arraycopy(audio.getChannel(BufferedAudio.LEFT), offset, bufferLeft, 0, bufferSize);
-      arraycopy(audio.getChannel(BufferedAudio.RIGHT), offset, bufferRight, 0, bufferSize);
+    process();
+  }
+  
+  synchronized void samples(float[] sampleBufferLeft, float[] sampleBufferRight) {  
+    left = sampleBufferLeft;
+    right = sampleBufferRight;
     
-      // Apply Balance to buffer
-      for ( int i = 0; i < bufferSize; i++ ) {
-        int balanceValue = (int)balanceSlider.value();
-        if ( balanceValue > 0 ) {
-          float balancePercent = (100 - balanceValue) / 100.0; 
-          buffer[i] = (bufferLeft[i] * balancePercent) + bufferRight[i];
-        } else if ( balanceValue < 0 ) {
-          float balancePercent = (100 - balanceValue * -1) / 100.0; 
-          buffer[i] = bufferLeft[i] + (bufferRight[i] * balancePercent);
-        } else {
-          buffer[i] = bufferLeft[i] + bufferRight[i];
-        }
+    // Apply balance to sample buffer storing in left mono buffer
+    for ( int i = 0; i < bufferSize; i++ ) {
+      int balanceValue = (int)balanceSlider.value();
+      if ( balanceValue > 0 ) {
+        float balancePercent = (100 - balanceValue) / 100.0; 
+        left[i] = (left[i] * balancePercent) + right[i];
+      } else if ( balanceValue < 0 ) {
+        float balancePercent = (100 - balanceValue * -1) / 100.0; 
+        left[i] = left[i] + (right[i] * balancePercent);
+      } else {
+        left[i] = left[i] + right[i];
       }
-      /*for ( int i = bufferSize/2; i < bufferSize; i++ ) {
-        buffer[i] = 0;
-      }*/
-    } else {
-      arraycopy(audio.getChannel(BufferedAudio.LEFT), offset, buffer, 0, bufferSize); 
     }
     
-    window.transform(buffer); // add window to buffer
+    process();
+  }
+  
+  void process() {
+    if ( frameNumber < frames -1 ) {
+      // need to apply the window transform before we zeropad
+      window.transform(left); // add window to samples
     
+      arrayCopy(left, 0, buffer, 0, left.length);
+    
+      if ( audio.isPlaying() ) {
+        frameNumber++;
+        analyze();
+        outputMIDINotes();
+      } 
+    } else {
+      audio.pause();
+      closeMIDINotes();
+    }
+  }
+  
+  void analyze() {
     fft.forward(buffer); // run fft on the buffer
     
     smoother.apply(fft); // run the smoother on the fft spectra
@@ -37,14 +61,13 @@ void analyze() {
     float[] binDistance = new float[fftSize];
     float[] freq = new float[fftSize];
       
-    
     float freqLowRange = octaveLowRange(0);
     float freqHighRange = octaveHighRange(8);
     
     boolean peakset = false;
     
     for (int k = 0; k < fftSize; k++) {
-      freq[k] = k / (float)bufferSize * audio.sampleRate();
+      freq[k] = k / (float)fftBufferSize * audio.sampleRate();
       
       // skip FFT bins that lay outside of octaves 0-9 
       if ( freq[k] < freqLowRange || freq[k] > freqHighRange ) { continue; }
@@ -54,9 +77,6 @@ void analyze() {
       boolean filterFreq = false;
   
       // Clear arrays that may have been pre populated before rewinding
-      spectrum[frameNumber][k] = 0;
-      level[frameNumber][freqToPitch(freq[k])] = 0;
-      pitch[frameNumber][freqToPitch(freq[k])] = false;
   
       // Filter out frequncies from disabled octaves    
       for ( int i = 0; i < 8; i ++ ) {
@@ -72,7 +92,7 @@ void analyze() {
         binDistance[k] = 2 * abs((12 * log(freq[k]/440.0) / log(2)) - (12 * log(closestFreq/440.0) / log(2)));
         float linearEQ = linearEQIntercept + k * linearEQSlope;
         
-        spectrum[frameNumber][k] = fft.getBand(k) * binWeight(WEIGHT_TYPE, binDistance[k]) * linearEQ;
+        spectrum[k] = fft.getBand(k) * binWeight(WEIGHT_TYPE, binDistance[k]) * linearEQ;
       
         // Sum PCP bins
         pcp[frameNumber][freqToPitch(freq[k]) % 12] += pow(fft.getBand(k), 2) * binWeight(WEIGHT_TYPE, binDistance[k]);
@@ -86,10 +106,10 @@ void analyze() {
         if ( freq[k] < freqLowRange || freq[k] > freqHighRange ) { continue; }
         
         if ( SCALE_LOCK_TOGGLE ) { // Apply SCALE LOCKING to spectrum
-          spectrum[frameNumber][k] *= scaleProfile[freqToPitch(freq[k]) % 12];
+          spectrum[k] *= scaleProfile[freqToPitch(freq[k]) % 12];
         }
         if ( PCP_TOGGLE ) { // Apply PCP to spectrum
-          spectrum[frameNumber][k] *= pcp[frameNumber][freqToPitch(freq[k]) % 12];  
+          spectrum[k] *= pcp[frameNumber][freqToPitch(freq[k]) % 12];  
         }
       }
     }
@@ -97,7 +117,7 @@ void analyze() {
     float sprev = 0;
     float scurr = 0;
     float snext = 0;
-    float maximum = max(spectrum[frameNumber]);
+    float maximum = max(spectrum);
     
     float[] foundPeak = new float[0];
     float[] foundLevel = new float[0];
@@ -106,20 +126,36 @@ void analyze() {
     for (int k = 1; k < fftSize -1; k++) {
       if ( freq[k] < freqLowRange || freq[k] > freqHighRange ) { continue; }
       
-      sprev = spectrum[frameNumber][k-1];
-      scurr = spectrum[frameNumber][k];
-      snext = spectrum[frameNumber][k+1];
+      sprev = spectrum[k-1];
+      scurr = spectrum[k];
+      snext = spectrum[k+1];
         
       //TODO: This is not the best way of doing this.
       // Instead compute the slope of each bin 
       if ( scurr > sprev && scurr < snext ) { 
-        peak[frameNumber][k] = SLOPEUP;
+        peak[k] = SLOPEUP;
       } else if ( scurr < sprev && scurr > snext ) {
-        peak[frameNumber][k] = SLOPEDOWN;
+        peak[k] = SLOPEDOWN;
       } else if ( scurr < sprev && scurr < snext && peakset ) {
-        peak[frameNumber][k] = VALLEY;
+        peak[k] = VALLEY;
         peakset = false;
       } else if ( scurr > sprev && scurr > snext && (scurr > PEAK_THRESHOLD) ) { // peak
+        // apply Parobolic Peak Interpolation to estimate the real peak frequency and magnitude
+        float ym1 = sprev;
+        float y0 = scurr;
+        float yp1 = snext;
+        
+        float p = (yp1 - ym1) / (2 * ( 2 * y0 - yp1 - ym1));
+        float y = y0 - 0.25 * (ym1 - yp1) * p; // the estimated peak magnitude
+        float a = 0.5 * (ym1 - 2 * y0 + yp1);  
+        
+        float estimatedFreq = (k + p) * audio.sampleRate() / fftBufferSize;
+        
+        if ( freqToPitch(estimatedFreq) != freqToPitch(freq[k]) ) {
+          freq[k] = estimatedFreq;
+          spectrum[k] = y;
+        }
+        
         boolean isHarmonic = false;
         
         // filter harmonics from peaks
@@ -131,7 +167,7 @@ void analyze() {
               break;
             }
             // If the current frequencies note has already peaked in a lower octave check to see if its level is lower probably a harmonic
-            if ( freqToPitch(freq[k]) % 12 == freqToPitch(foundPeak[f]) % 12 && spectrum[frameNumber][k] < foundLevel[f] ) {
+            if ( freqToPitch(freq[k]) % 12 == freqToPitch(foundPeak[f]) % 12 && spectrum[k] < foundLevel[f] ) {
               isHarmonic = true;
               break;
             }
@@ -139,20 +175,23 @@ void analyze() {
         }
   
         if ( isHarmonic ) {        
-          peak[frameNumber][k] = HARMONIC;
+          peak[k] = HARMONIC;
         } else {
-          peak[frameNumber][k] = PEAK;
-          pitch[frameNumber][freqToPitch(freq[k])] = true;
-          level[frameNumber][freqToPitch(freq[k])] = spectrum[frameNumber][k];
+          peak[k] = PEAK;
+          
+          notes[frameNumber] = (Note[])append(notes[frameNumber], new Note(freq[k], spectrum[k]));
           
           // Track Peaks and Levels in this pass so we can detect harmonics 
           foundPeak = append(foundPeak, freq[k]);
-          foundLevel = append(foundLevel, spectrum[frameNumber][k]);
+          foundLevel = append(foundLevel, spectrum[k]);
           peakset = true;     
         }
       }
     }
   }
+  
+  // draw routine needs to be synchronized otherwise it will run while buffers are being populated
+  synchronized void draw() { 
+    render();
+  }
 }
-
-

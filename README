@@ -80,8 +80,12 @@ Usage:
 Keyboard Commands:
 
   0-7   Toggle octaves 0-7 on or off.
+  
+  m     Mute audio toggle on/off.
 
-  p     Toggle PCP on or off.
+  p     Pitch Class Profile (PCP) toggle on/off.
+
+  SPACE Pause/Play toggle.
 
   ESC   Quit.
 
