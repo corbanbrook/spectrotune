@@ -69,28 +69,14 @@ void keyPressed() {
   }
   
   switch(keyCode) {
-    case UP:
-      PEAK_THRESHOLD += 5;
-      break;
-      
-    case DOWN:
-      PEAK_THRESHOLD -= 5;
-      break;
-      
     case RIGHT:
-      SMOOTH_POINTS++;
-      if ( SMOOTH_TOGGLE ) {
-        //fft.smooth(SMOOTH_TYPE, SMOOTH_POINTS);
-      }
+      PEAK_THRESHOLD += 5;
+      sliderThreshold.setValue(PEAK_THRESHOLD);
       break;
       
     case LEFT:
-      if ( SMOOTH_POINTS > 3 ) {
-        SMOOTH_POINTS--;
-        if ( SMOOTH_TOGGLE ) {
-          //fft.smooth(SMOOTH_TYPE, SMOOTH_POINTS);
-        }
-      }
+      PEAK_THRESHOLD -= 5;
+      sliderThreshold.setValue(PEAK_THRESHOLD);
       break;
   }
 }

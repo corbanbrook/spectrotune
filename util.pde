@@ -100,7 +100,7 @@ void openAudioFile(String audioFile) {
   
   println("\nAudio source: " + audioFile + " " + audio.length() / 1000 + " seconds (" + frames + " frames)");
   println("Time size: " + bufferSize + " bytes / Sample rate: " + audio.sampleRate() / 1000f + "kHz");
-  println("FFT bandwidth: " + (2.0 / bufferSize) * ((float)audio.sampleRate() / 2.0) + "Hz");
+  println("FFT bandwidth: " + (2.0 / fftBufferSize) * ((float)audio.sampleRate() / 2.0) + "Hz");
   
   if (audio.type() == Minim.STEREO) {      
     println("Channels: 2 (STEREO)\n");

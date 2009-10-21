@@ -55,6 +55,7 @@ Toggle toggleHarmonics;
 
 Slider sliderProgress;
 Slider sliderBalance;
+Slider sliderThreshold;
 
 FFT fft;
 
@@ -180,8 +181,8 @@ void setup() {
   sliderBalance.setValueLabel(" CENTER");
     
   // Peak detect threshold slider
-  Slider thresholdSlider = controlP5.addSlider("Threshold", 0, 255, PEAK_THRESHOLD, 380, 140, 75, 10);
-  thresholdSlider.setId(1);
+  sliderThreshold = controlP5.addSlider("Threshold", 0, 255, PEAK_THRESHOLD, 380, 140, 75, 10);
+  sliderThreshold.setId(1);
   
   // MIDI TAB
   controlP5.addTextlabel("labelMIDI", "MIDI", 380, 10).moveTo(tabMIDI);
