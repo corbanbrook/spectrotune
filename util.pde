@@ -79,51 +79,6 @@ void precomputeOctaveRegions() {
   println("Start: " + fftBinStart[0] + " End: " + fftBinEnd[7] + " (" + fftSize + " total)");
 }
 
-// TODO: Not sure how to precompute the scale with an AudioPlayer.
-// Might need to load up peices of the audio file in a buffer first.
-void precomputeScale() {
-  float freqLowRange = octaveLowRange(0);
-  float freqHighRange = octaveHighRange(8);
-  float[] bins = new float[fftSize];
-  int computedFrames = 0;
-  for ( int i = frames/2; i < frames; i++ ) {
-    if ( i > frames * 0.75 ) { break; } 
-    
-    int offset = (int)(i * audio.sampleRate() / framesPerSecond);
-    //arraycopy(audio.getChannel(BufferedAudio.LEFT), offset, buffer, 0, bufferSize);
-    
-    fft.forward(buffer);
-
-    for ( int k = 0; k < fftSize; k++ ) {
-      float freq = k / (float)bufferSize * audio.sampleRate();
-      scaleProfile[freqToPitch(freq) % 12] += (fft.getBand(k));
-    }
-    
-    computedFrames++;
-  }
-  
-  // Normalize scaleProfile
-  float scaleMax = max(scaleProfile);
-  for ( int i = 0; i < 12; i++ ) {
-    scaleProfile[i] /= scaleMax;
-  }
-  
-  float[] weakest = sort(scaleProfile);
-  for ( int i = 0; i < 12; i++ ) {
-    boolean inScale = true;
-    for ( int j = 0; j < 5; j++ ) {
-      if (scaleProfile[i] == weakest[j]) {
-        inScale = false;
-        break;
-      }
-    }
-    if ( inScale ) {
-      scaleProfile[i] = 1.2; // boost by 20%
-    }
-  } 
-  println("\nDone computing scale. " + computedFrames + "/" + frames);
-}
-
 void openAudioFile(String audioFile) {
   if ( TRACK_LOADED ) {
     audio.pause();
@@ -131,8 +86,8 @@ void openAudioFile(String audioFile) {
     
     loadedAudioFile = "";
     
-    progressSlider.setValue(0);
-    progressSlider.setMax(0);
+    sliderProgress.setValue(0);
+    sliderProgress.setMax(0);
    
     TRACK_LOADED = false; 
   }
@@ -160,9 +115,8 @@ void openAudioFile(String audioFile) {
   pcp = new float[frames][12];
   
   precomputeOctaveRegions();
-  //precomputeScale(); // disabled for now.
   
-  progressSlider.setMax(audio.length());
+  sliderProgress.setMax(audio.length());
   cuePosition = audio.position();
   
   // Switch back to general tab

@@ -20,15 +20,15 @@ class Sampler implements AudioListener
     
     // Apply balance to sample buffer storing in left mono buffer
     for ( int i = 0; i < bufferSize; i++ ) {
-      int balanceValue = (int)balanceSlider.value();
+      int balanceValue = (int)sliderBalance.value();
       if ( balanceValue > 0 ) {
         float balancePercent = (100 - balanceValue) / 100.0; 
-        left[i] = (left[i] * balancePercent) + right[i];
+        left[i] = (left[i] / 2f * balancePercent) + right[i] / 2f;
       } else if ( balanceValue < 0 ) {
         float balancePercent = (100 - balanceValue * -1) / 100.0; 
-        left[i] = left[i] + (right[i] * balancePercent);
+        left[i] = left[i] / 2f + (right[i] / 2f * balancePercent);
       } else {
-        left[i] = left[i] + right[i];
+        left[i] = (left[i] + right[i]) / 2f;
       }
     }
     
@@ -56,15 +56,13 @@ class Sampler implements AudioListener
   void analyze() {
     fft.forward(buffer); // run fft on the buffer
     
-    smoother.apply(fft); // run the smoother on the fft spectra
+    //smoother.apply(fft); // run the smoother on the fft spectra
     
     float[] binDistance = new float[fftSize];
     float[] freq = new float[fftSize];
       
     float freqLowRange = octaveLowRange(0);
     float freqHighRange = octaveHighRange(7);
-    
-    boolean peakset = false;
     
     for (int k = 0; k < fftSize; k++) {
       freq[k] = k / (float)fftBufferSize * audio.sampleRate();
@@ -75,8 +73,6 @@ class Sampler implements AudioListener
       // Calculate fft bin distance and apply weighting to spectrum
       float closestFreq = pitchToFreq(freqToPitch(freq[k])); // Rounds FFT frequency to closest semitone frequency
       boolean filterFreq = false;
-  
-      // Clear arrays that may have been pre populated before rewinding
   
       // Filter out frequncies from disabled octaves    
       for ( int i = 0; i < 8; i ++ ) {
@@ -90,10 +86,13 @@ class Sampler implements AudioListener
       // Set spectrum 
       if ( !filterFreq ) {
         binDistance[k] = 2 * abs((12 * log(freq[k]/440.0) / log(2)) - (12 * log(closestFreq/440.0) / log(2)));
-        float linearEQ = linearEQIntercept + k * linearEQSlope;
         
-        spectrum[k] = fft.getBand(k) * binWeight(WEIGHT_TYPE, binDistance[k]) * linearEQ;
-      
+        spectrum[k] = fft.getBand(k) * binWeight(WEIGHT_TYPE, binDistance[k]);
+        
+        if ( LINEAR_EQ_TOGGLE ) {
+          spectrum[k] *= (linearEQIntercept + k * linearEQSlope);
+        }
+        
         // Sum PCP bins
         pcp[frameNumber][freqToPitch(freq[k]) % 12] += pow(fft.getBand(k), 2) * binWeight(WEIGHT_TYPE, binDistance[k]);
       }
@@ -101,23 +100,17 @@ class Sampler implements AudioListener
     
     normalizePCP();
     
-    if ( SCALE_LOCK_TOGGLE || PCP_TOGGLE ) {
+    if ( PCP_TOGGLE ) {
       for ( int k = 0; k < fftSize; k++ ) {
         if ( freq[k] < freqLowRange || freq[k] > freqHighRange ) { continue; }
         
-        if ( SCALE_LOCK_TOGGLE ) { // Apply SCALE LOCKING to spectrum
-          spectrum[k] *= scaleProfile[freqToPitch(freq[k]) % 12];
-        }
-        if ( PCP_TOGGLE ) { // Apply PCP to spectrum
-          spectrum[k] *= pcp[frameNumber][freqToPitch(freq[k]) % 12];  
-        }
+        spectrum[k] *= pcp[frameNumber][freqToPitch(freq[k]) % 12];  
       }
     }
     
     float sprev = 0;
     float scurr = 0;
     float snext = 0;
-    float maximum = max(spectrum);
     
     float[] foundPeak = new float[0];
     float[] foundLevel = new float[0];
@@ -130,30 +123,21 @@ class Sampler implements AudioListener
       scurr = spectrum[k];
       snext = spectrum[k+1];
         
-      //TODO: This is not the best way of doing this.
-      // Instead compute the slope of each bin 
-      if ( scurr > sprev && scurr < snext ) { 
-        peak[k] = SLOPEUP;
-      } else if ( scurr < sprev && scurr > snext ) {
-        peak[k] = SLOPEDOWN;
-      } else if ( scurr < sprev && scurr < snext && peakset ) {
-        peak[k] = VALLEY;
-        peakset = false;
-      } else if ( scurr > sprev && scurr > snext && (scurr > PEAK_THRESHOLD) ) { // peak
-        // apply Parobolic Peak Interpolation to estimate the real peak frequency and magnitude
+      if ( scurr > sprev && scurr > snext && (scurr > PEAK_THRESHOLD) ) { // peak
+        // Parobolic Peak Interpolation to estimate the real peak frequency and magnitude
         float ym1 = sprev;
         float y0 = scurr;
         float yp1 = snext;
         
         float p = (yp1 - ym1) / (2 * ( 2 * y0 - yp1 - ym1));
-        float y = y0 - 0.25 * (ym1 - yp1) * p; // the estimated peak magnitude
+        float interpolatedAmplitude = y0 - 0.25 * (ym1 - yp1) * p;
         float a = 0.5 * (ym1 - 2 * y0 + yp1);  
         
-        float estimatedFreq = (k + p) * audio.sampleRate() / fftBufferSize;
+        float interpolatedFrequency = (k + p) * audio.sampleRate() / fftBufferSize;
         
-        if ( freqToPitch(estimatedFreq) != freqToPitch(freq[k]) ) {
-          freq[k] = estimatedFreq;
-          spectrum[k] = y;
+        if ( freqToPitch(interpolatedFrequency) != freqToPitch(freq[k]) ) {
+          freq[k] = interpolatedFrequency;
+          spectrum[k] = interpolatedAmplitude;
         }
         
         boolean isHarmonic = false;
@@ -183,8 +167,7 @@ class Sampler implements AudioListener
           
           // Track Peaks and Levels in this pass so we can detect harmonics 
           foundPeak = append(foundPeak, freq[k]);
-          foundLevel = append(foundLevel, spectrum[k]);
-          peakset = true;     
+          foundLevel = append(foundLevel, spectrum[k]);    
         }
       }
     }

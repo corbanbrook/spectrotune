@@ -1,10 +1,5 @@
 void render() {
-  image(bg, 0, 0); // render the background
-  
-  int keyHeight = height / (keyboardEnd - keyboardStart);
-  
-  strokeWeight(1);
-  stroke(0);
+  image(bg, 0, 0); // Render the background
   
   // Render octave toggle buttons for active octaves
   for ( int i = 0; i < 8; i++ ) {
@@ -12,6 +7,38 @@ void render() {
       image(octaveBtn, 0, height - (i * 36) - 36);
     }
   }
+  
+  String selectedTab = controlP5.window(this).currentTab().name();
+  
+  if ( selectedTab == "windowing") {
+    renderWindowCurve();
+  } else if ( selectedTab == "FFT" ) {
+    renderFFT();
+  } else {
+    renderPeaks();
+  }
+  
+  // Update progress bar
+  if ( isLoaded() ) {
+    if ( audio.isPlaying() ) {
+      float percentComplete = audio.position() / (float)audio.length() * 100;
+      sliderProgress.setValue(audio.position());
+      sliderProgress.setValueLabel(nf(round(percentComplete), 2) + "%");
+    } 
+  } else {
+    sliderProgress.setValueLabel("NO FILE LOADED");
+  }
+  
+  // Render semi transparent UI background
+  fill(0, 200);
+  rect(width - 140, 0, width, height);
+ 
+  // Render Buildingsky logo on top of it all
+  image(logo, 25, 254);
+}
+
+void renderPeaks() {
+  int keyHeight = height / (keyboardEnd - keyboardStart);
   
   if ( isLoaded() ) {
     // render key presses for detected peaks
@@ -61,33 +88,7 @@ void render() {
       fill(140);
       text(note.label(), 24, height - ((note.pitch - keyboardStart) * keyHeight + keyHeight + 2));
     }
-      
-    if ( audio.isPlaying() ) {
-      // Update Progress bar
-      float percentComplete = audio.position() / (float)audio.length() * 100;
-      progressSlider.setValue(audio.position());
-      progressSlider.setValueLabel(nf(round(percentComplete), 2) + "%");
-      
-      // Log FPS and % complete
-      if ( frameNumber % 100 == 0 ) {
-        println("  " + round(percentComplete) + "% complete (" + round(frameRate) + " fps)" + " frame #: " + frameNumber);
-      }
-    } // end if audio.isPlaying 
-  } else {
-    progressSlider.setValueLabel("NO FILE LOADED");
   }
-  
-  // Render GUI pane
-  fill(0, 200);
-  rect(width - 140, 0, width, height);
- 
-  // Render Windowing curve
-  if ( controlP5.window(this).currentTab().name() == "windowing" ) {
-    renderWindowCurve();
-  }
- 
-  // Render Buildingsky logo on top of it all
-  image(logo, 25, 254);
 }
 
 void renderWindowCurve() {
@@ -102,5 +103,13 @@ void renderWindowCurve() {
     line(i + windowX, windowY - windowCurve[i] * windowHeight, i+1 + windowX, windowY - windowCurve[i+1] * windowHeight);  
   }
   
+  noStroke();
+}
+
+void renderFFT() {
+  stroke(255);
+  for ( int i = 0; i < spectrum.length; i+=5) {
+    line(i/5, height, i/5, height - spectrum[i] * 2);
+  }
   noStroke();
 }

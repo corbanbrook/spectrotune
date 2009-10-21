@@ -23,9 +23,9 @@ int ZERO_PAD_MULTIPLIER = 16; // zero padding adds interpolation resolution to t
 int fftBufferSize = bufferSize * ZERO_PAD_MULTIPLIER;
 int fftSize = fftBufferSize/2;
 
-float framesPerSecond = 25.0;
+int PEAK_THRESHOLD = 50; // default peak threshold
 
-int PEAK_THRESHOLD = 75; // default peak threshold
+//float framesPerSecond = 25.0;
 
 // MIDI notes span from 0 - 128, octaves -1 -> 9. Specify start and end for piano
 int keyboardStart = 12; // 12 is octave C0
@@ -46,9 +46,15 @@ Tab tabWindowing;
 Tab tabSmoothing;
 Tab tabMIDI;
 Tab tabFiles;
+Tab tabFFT;
 
-Slider progressSlider;
-Slider balanceSlider;
+Toggle toggleLinearEQ;
+Toggle togglePCP;
+Toggle toggleMIDI;
+Toggle toggleHarmonics;
+
+Slider sliderProgress;
+Slider sliderBalance;
 
 FFT fft;
 
@@ -83,9 +89,8 @@ float linearEQIntercept = 1f; // default no eq boost
 float linearEQSlope = 0f; // default no slope boost
 
 // Toggles and their defaults
-boolean SCALE_LOCK_TOGGLE = false;
+boolean LINEAR_EQ_TOGGLE = false;
 boolean PCP_TOGGLE = true;
-boolean EQUALIZER_TOGGLE = false;
 boolean HARMONICS_TOGGLE = true;
 boolean MIDI_TOGGLE = true;
 boolean SMOOTH_TOGGLE = true;
@@ -102,7 +107,7 @@ boolean TRACK_LOADED = false;
 boolean[] OCTAVE_TOGGLE = {false, true, true, true, true, true, true, true};
 int[] OCTAVE_CHANNEL = {0,0,0,0,0,0,0,0}; // set all octaves to channel 0 (0-indexed channel 1)
 
-public static final int NONE = 0;
+//public static final int NONE = 0;
 
 public static final int PEAK = 1;
 public static final int VALLEY = 2;
@@ -130,8 +135,8 @@ void setup() {
   zeroPadBuffer();
   
   // Equalizer settings. Need a tab for this.
-  //linearEQIntercept = 1f;
-  //linearEQSlope = 0.001f;
+  linearEQIntercept = 1f;
+  linearEQSlope = 0.01f;
   
   // Logo UI Images
   bg = loadImage("background.png");
@@ -144,57 +149,45 @@ void setup() {
   controlP5 = new ControlP5(this);
   
   tabDefault = controlP5.addTab("default").activateEvent(true);
+  tabFFT = controlP5.addTab("FFT").activateEvent(true);
   tabWindowing = controlP5.addTab("windowing").activateEvent(true);
   tabSmoothing = controlP5.addTab("smoothing").activateEvent(true);
   tabMIDI = controlP5.addTab("midi").activateEvent(true);
   tabFiles = controlP5.addTab("files").activateEvent(true);
-  
+
   // GENERAL TAB
   tabDefault.setLabel("GENERAL");
   controlP5.addTextlabel("labelGeneral", "GENERAL", 380, 10).moveTo("default");
   
   // Pitch class profile toggle
-  Toggle togglePCP = controlP5.addToggle("togglePCP", PCP_TOGGLE, 380, 30, 10,10);
+  togglePCP = controlP5.addToggle("togglePCP", PCP_TOGGLE, 380, 30, 10,10);
   togglePCP.setLabel("Pitch Class Profile");
   togglePCP.setColorForeground(0x8000ffc8);
   togglePCP.setColorActive(0xff00ffc8);
   
    // Pitch class profile toggle
-  Toggle toggleScaleLock = controlP5.addToggle("toggleScaleLock", SCALE_LOCK_TOGGLE, 380,60, 10,10);
-  toggleScaleLock.setLabel("Scale Lock");
-  toggleScaleLock.setColorForeground(0x8000ffc8);
-  toggleScaleLock.setColorActive(0xff00ffc8);
+  toggleLinearEQ = controlP5.addToggle("toggleLinearEQ", LINEAR_EQ_TOGGLE, 380,60, 10,10);
+  toggleLinearEQ.setLabel("Linear EQ");
+  toggleLinearEQ.setColorForeground(0x8000ffc8);
+  toggleLinearEQ.setColorActive(0xff00ffc8);
   
-  Toggle toggleHarmonics = controlP5.addToggle("toggleHarmonics", HARMONICS_TOGGLE, 380, 90, 10, 10);
+  toggleHarmonics = controlP5.addToggle("toggleHarmonics", HARMONICS_TOGGLE, 380, 90, 10, 10);
   toggleHarmonics.setLabel("Harmonics Filter");
   toggleHarmonics.setColorForeground(0x9000ffc8);
   toggleHarmonics.setColorActive(0xff00ffc8);
   
-  // FFT bin distance weighting radios
-  //controlP5.addTextlabel("labelWeight", "FFT WEIGHT", 380, 130);
-  Radio radioWeight = controlP5.addRadio("radioWeight", 380, 160);
-  radioWeight.add("UNIFORM (OFF)", UNIFORM); // default
-  radioWeight.add("DISCRETE", DISCRETE);
-  radioWeight.add("LINERAR", LINEAR);
-  radioWeight.add("QUADRATIC", QUADRATIC);
-  radioWeight.add("EXPONENTIAL", EXPONENTIAL);
-  
-  balanceSlider = controlP5.addSlider("balance", -100, 100, 0, 380, 120, 50, 10);
-  balanceSlider.setValueLabel(" CENTER");
+  sliderBalance = controlP5.addSlider("balance", -100, 100, 0, 380, 120, 50, 10);
+  sliderBalance.setValueLabel(" CENTER");
     
   // Peak detect threshold slider
   Slider thresholdSlider = controlP5.addSlider("Threshold", 0, 255, PEAK_THRESHOLD, 380, 140, 75, 10);
   thresholdSlider.setId(1);
   
-  // Smoothing points slider
-  Slider smoothingSlider = controlP5.addSlider("Smoothing", 1, 10, SMOOTH_POINTS, 380, height - 40, 75, 10);
-  smoothingSlider.setId(2);
-  
   // MIDI TAB
   controlP5.addTextlabel("labelMIDI", "MIDI", 380, 10).moveTo(tabMIDI);
   
   // MIDI output toggle
-  Toggle toggleMIDI = controlP5.addToggle("toggleMIDI", MIDI_TOGGLE, 380, 30, 10,10);
+  toggleMIDI = controlP5.addToggle("toggleMIDI", MIDI_TOGGLE, 380, 30, 10,10);
   toggleMIDI.setLabel("MIDI OUTPUT");
   toggleMIDI.moveTo(tabMIDI);
   
@@ -245,6 +238,11 @@ void setup() {
   radioSmooth.add("TRIANGLE", Smooth.TRIANGLE);
   radioSmooth.add("AJACENT AVERAGE", Smooth.ADJAVG);
   radioSmooth.moveTo(tabSmoothing);
+  
+  // Smoothing points slider
+  Slider sliderSmoothing = controlP5.addSlider("Points", 1, 10, SMOOTH_POINTS, 380, 100, 75, 10);
+  sliderSmoothing.setId(2);
+  sliderSmoothing.moveTo(tabSmoothing);
 
   // FILE TAB -- think about adding sDrop support.. may be better
 
@@ -263,12 +261,24 @@ void setup() {
     }
   }
   
+  controlP5.addTextlabel("labelFFT", "FFT", 380, 10).moveTo(tabFFT);
+  
+  // FFT bin distance weighting radios
+  //controlP5.addTextlabel("labelWeight", "FFT WEIGHT", 380, 30);
+  Radio radioWeight = controlP5.addRadio("radioWeight", 380, 30);
+  radioWeight.add("UNIFORM (OFF)", UNIFORM); // default
+  radioWeight.add("DISCRETE", DISCRETE);
+  radioWeight.add("LINERAR", LINEAR);
+  radioWeight.add("QUADRATIC", QUADRATIC);
+  radioWeight.add("EXPONENTIAL", EXPONENTIAL);
+  radioWeight.moveTo(tabFFT);
+  
   // GLOBAL UI
   
   // Progress bar 
-  progressSlider = controlP5.addSlider("Progress", 0, 0, 0, 380, height - 20, 75, 10);
-  progressSlider.setId(3);
-  progressSlider.moveTo("global"); // always show no matter what tab is selected
+  sliderProgress = controlP5.addSlider("Progress", 0, 0, 0, 380, height - 20, 75, 10);
+  sliderProgress.setId(3);
+  sliderProgress.moveTo("global"); // always show no matter what tab is selected
       
   textFont(createFont("Arial", 10, true));
   

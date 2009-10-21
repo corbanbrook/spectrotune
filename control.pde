@@ -3,30 +3,42 @@ void keyPressed() {
     case ' ': // pause/play toggle
       if ( TRACK_LOADED ) {
         if ( audio.isPlaying() ) {
-          progressSlider.setValueLabel("PAUSED");
+          sliderProgress.setValueLabel("PAUSED");
           audio.pause();
           closeMIDINotes();
         } else {
-          progressSlider.setValueLabel("PLAYING");
+          sliderProgress.setValueLabel("PLAYING");
           audio.play();
         }
       }
       break;
       
-    case 'm': // mute toggle
+    case 'm': // mute audio toggle
       if ( audio.isMuted() ) {
         audio.unmute();
       } else {
         audio.mute();
       }
       break;
+      
+    case 'n': // mute midi toggle
+      MIDI_TOGGLE = !MIDI_TOGGLE;
+      toggleMIDI.setState(MIDI_TOGGLE);
+      break;
     
     case 'e': // turn equalizer on/off
-      EQUALIZER_TOGGLE = !EQUALIZER_TOGGLE;
+      LINEAR_EQ_TOGGLE = !LINEAR_EQ_TOGGLE;
+      toggleLinearEQ.setState(LINEAR_EQ_TOGGLE);
       break;
     
     case 'p': // turn PCP on/off
       PCP_TOGGLE = !PCP_TOGGLE;
+      togglePCP.setState(PCP_TOGGLE);
+      break;
+      
+    case 'h': // turn Harmonic filter on/off
+      HARMONICS_TOGGLE = !HARMONICS_TOGGLE;
+      toggleHarmonics.setState(HARMONICS_TOGGLE);
       break;
     
     // Octave Toggles
@@ -143,8 +155,8 @@ void toggleMIDI(boolean flag) {
   }
 }
 
-void toggleScaleLock(boolean flag) {
-  SCALE_LOCK_TOGGLE = flag;
+void toggleLinearEQ(boolean flag) {
+  LINEAR_EQ_TOGGLE = flag;
 }
 
 void toggleHarmonics(boolean flag) {
@@ -193,12 +205,12 @@ void oct7(int channel) {
 }
 
 void balance(int value) {
-  balanceSlider.setValueLabel(value + "%");
+  sliderBalance.setValueLabel(value + "%");
   if ( value == 0 ) {
-    balanceSlider.setValueLabel("  CENTER");
+    sliderBalance.setValueLabel("  CENTER");
   } else if ( value < 0 ) {
-    balanceSlider.setValueLabel(value * -1 + "% LEFT");
+    sliderBalance.setValueLabel(value * -1 + "% LEFT");
   } else if ( value > 0 ) {
-    balanceSlider.setValueLabel(value + "% RIGHT");
+    sliderBalance.setValueLabel(value + "% RIGHT");
   }
 }
