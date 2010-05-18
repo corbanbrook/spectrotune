@@ -9,8 +9,8 @@ import java.lang.reflect.InvocationTargetException;
 //int bufferSize = 16384;
 //int bufferSize = 8192;
 //int bufferSize = 4096;
-//int bufferSize = 2048;
-int bufferSize = 1024;
+int bufferSize = 2048;
+//int bufferSize = 1024;
 //int bufferSize = 512;
 
 // since we are dealing with small buffer sizes (1024) but are trying to detect peaks at low frequency ranges
@@ -18,7 +18,7 @@ int bufferSize = 1024;
 // otherwise FFT bins will be quite large making it impossible to distinguish between low octave notes which
 // are seperated by only a few Hz in these ranges.
 
-int ZERO_PAD_MULTIPLIER = 16; // zero padding adds interpolation resolution to the FFT 
+int ZERO_PAD_MULTIPLIER = 4; // zero padding adds interpolation resolution to the FFT, it also dilutes the magnitude of the bins
 
 int fftBufferSize = bufferSize * ZERO_PAD_MULTIPLIER;
 int fftSize = fftBufferSize/2;
@@ -56,6 +56,8 @@ Toggle toggleHarmonics;
 Slider sliderProgress;
 Slider sliderBalance;
 Slider sliderThreshold;
+
+Textlabel labelThreshold;
 
 FFT fft;
 
@@ -139,7 +141,7 @@ void setup() {
   linearEQIntercept = 1f;
   linearEQSlope = 0.01f;
   
-  // Logo UI Images
+  // UI Images
   bg = loadImage("background.png");
   whiteKey = loadImage("whitekey.png");
   blackKey = loadImage("blackkey.png");
@@ -228,6 +230,7 @@ void setup() {
   radioWindow.add("COSINE", Window.COSINE);
   radioWindow.add("TRIANGULAR", Window.TRIANGULAR);
   radioWindow.add("BLACKMAN", Window.BLACKMAN);
+  radioWindow.add("GAUSS", Window.GAUSS);
   radioWindow.moveTo(tabWindowing);
   //radioWindow.activate("HAMMING"); // set default
   
@@ -274,6 +277,9 @@ void setup() {
   radioWeight.add("EXPONENTIAL", EXPONENTIAL);
   radioWeight.moveTo(tabFFT);
   
+  labelThreshold = controlP5.addTextlabel("labelThreshold", "THRESHOLD", PEAK_THRESHOLD + 26, 60);
+  labelThreshold.moveTo(tabFFT);
+  
   // GLOBAL UI
   
   // Progress bar 
@@ -284,6 +290,7 @@ void setup() {
   textFont(createFont("Arial", 10, true));
   
   rectMode(CORNERS);
+  
   smooth();
 }
 

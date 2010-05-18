@@ -6,7 +6,7 @@ void outputMIDINotes() {
     for ( int i = 0; i < notes[frameNumber].length; i++ ) {
       Note note = notes[frameNumber][i];
       if ( OCTAVE_TOGGLE[note.octave] && notesOpen[note.pitch] == null) {
-        midiOut.sendNoteOn(note.channel, note.pitch, 90);
+        midiOut.sendNoteOn(note.channel, note.pitch, note.velocity);
         notesOpen[note.pitch] = note;
       }
     }
@@ -21,7 +21,7 @@ void outputMIDINotes() {
           }
         }
         if ( !isOpen ) {
-          midiOut.sendNoteOff(notesOpen[i].channel, i, 90);
+          midiOut.sendNoteOff(notesOpen[i].channel, i, notesOpen[i].velocity);
           notesOpen[i] = null;
         }
       }
@@ -32,7 +32,7 @@ void outputMIDINotes() {
 void closeMIDINotes() {  
   for ( int i = 0; i < notesOpen.length; i++ ) {
     if ( notesOpen[i] != null ) {
-      midiOut.sendNoteOff(notesOpen[i].channel, i, 90);
+      midiOut.sendNoteOff(notesOpen[i].channel, i, notesOpen[i].velocity);
       notesOpen[i] = null;
     }
   }

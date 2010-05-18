@@ -106,13 +106,7 @@ void renderWindowCurve() {
   noStroke();
 }
 
-void renderFFT() {
-  /*stroke(255);
-  for ( int i = 0; i < spectrum.length; i+=5) {
-    line(i/5, height, i/5, height - spectrum[i] * 2);
-  }
-  noStroke();*/
-  
+void renderFFT() {  
   noStroke();
 
   int keyHeight = height / (keyboardEnd - keyboardStart);
@@ -138,7 +132,8 @@ void renderFFT() {
   }
   
   for ( int i = keyboardStart; i < keyboardEnd; i++) {
-    noteColor = color(255, 100 * amp[i] / 400, 0);
+    //noteColor = color(255, 100 * amp[i] / 400, 0);
+    noteColor = color(0, 255, 240);
     
     fill(red(noteColor)/4, green(noteColor)/4, blue(noteColor)/4);
     rect(24, height - ((i - keyboardStart) * keyHeight), 25 + amp[i], height - ((i - keyboardStart) * keyHeight + keyHeight)); // shadow
@@ -148,6 +143,7 @@ void renderFFT() {
   }
   }
   stroke(255);
+  labelThreshold.setPosition(PEAK_THRESHOLD + 26, 60);
   line(PEAK_THRESHOLD + 24, 0, PEAK_THRESHOLD + 24, height);
   noStroke();
 }

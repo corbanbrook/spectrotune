@@ -39,7 +39,8 @@ class Sampler implements AudioListener
     if ( frameNumber < frames -1 ) {
       // need to apply the window transform before we zeropad
       window.transform(left); // add window to samples
-    
+      //fft.window(FFT.COSINE);
+      
       arrayCopy(left, 0, buffer, 0, left.length);
     
       if ( audio.isPlaying() ) {

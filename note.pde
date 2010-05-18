@@ -4,13 +4,13 @@ static final boolean[] keyboard = { true, false, true, false, true, true, false,
 class Note {
   float frequency;
   float amplitude;
-  
+
   int octave;
   int semitone;
   
   int channel;
-  
   int pitch;
+  int velocity;
   
   Note(float frequency, float amplitude) {
     this.frequency = frequency;   
@@ -19,6 +19,11 @@ class Note {
     this.octave = this.pitch / 12 - 1;
     this.semitone = this.pitch % 12;
     this.channel = OCTAVE_CHANNEL[this.octave];
+    this.velocity = round((amplitude - PEAK_THRESHOLD) / (255f + PEAK_THRESHOLD) * 128f);
+    
+    if (this.velocity > 127 ) {
+      this.velocity = 127;
+    }
   }
   
   public String label() {

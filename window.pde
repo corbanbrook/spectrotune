@@ -5,6 +5,7 @@ public class Window {
   public static final int COSINE = 3;
   public static final int TRIANGULAR = 4;
   public static final int BLACKMAN = 5;
+  public static final int GAUSS = 6;
 
   private int mode = RECTANGULAR;
 
@@ -28,6 +29,9 @@ public class Window {
         break;
       case BLACKMAN:
         blackmanWindow(samples);
+        break;
+      case GAUSS:
+        gaussWindow(samples);
         break;
     }
   }
@@ -54,6 +58,9 @@ public class Window {
         break;
       case BLACKMAN:
         blackmanWindow(samples);
+        break;
+      case GAUSS:
+        gaussWindow(samples);
         break;
     }
     return samples;
@@ -87,5 +94,12 @@ public class Window {
     for(int n = 0; n < samples.length; n++) {
       samples[n] *= (0.42f - 0.5f * Math.cos(TWO_PI * n / (samples.length - 1))) + (0.08f * Math.cos(4 * PI * n / (samples.length -1)));
     }
+  }
+  
+  void gaussWindow(float[] samples) {
+    double a = 2.5;
+    for (int n = 0; n < samples.length; n++ ) {
+      samples[n] *= Math.pow(Math.E, -0.5 * Math.pow((n - (samples.length - 1) / 2) / (0.1 * (samples.length - 1) / 2), 2));
+    }  
   }
 }
