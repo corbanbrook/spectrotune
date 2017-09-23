@@ -1,6 +1,6 @@
 # Spectrotune
 
-Spectrotune is a [Processing](http://www.processing.org) application which scans a
+Spectrotune is a [Processing](https://www.processing.org) application which scans a
 polyphonic audio source (in wav, mp3, etc formats), performs pitch detection and
 outputs to MIDI.
 
@@ -30,7 +30,7 @@ Spectrotune offers adjustable options to help improve pitch detection, including
 ## Install and Basic Usage (macOS Standalone Application):
 
   Spectrotune is now available in a standalone application for macOS which you can download 
-  from [Downloads/Releases](http://github.com/corbanbrook/spectrotune/downloads)
+  from [Downloads/Releases](https://github.com/corbanbrook/spectrotune/downloads)
 
   * Open DMG file.
 
@@ -53,9 +53,9 @@ Spectrotune offers adjustable options to help improve pitch detection, including
 
 ## Processing Install (all platforms):
 
-  * Install [processing](http://www.processing.org)
+  * Install [processing](https://www.processing.org)
   
-  * Install [rwmidi](http://ruinwesen.com/support-files/rwmidi-0.1c.zip) 
+  * Install [rwmidi](https://web.archive.org/web/20110606063738/http://ruinwesen.com/support-files/rwmidi-0.1c.zip) 
 
   * Install [ControlP5](http://www.sojamo.de/libraries/controlP5/)
 
@@ -63,7 +63,7 @@ Spectrotune offers adjustable options to help improve pitch detection, including
   
   ```
     cd ~/Documents/Processing (this is where I keep mine)
-    git clone git://github.com/corbanbrook/spectrotune.git
+    git clone https://github.com/corbanbrook/spectrotune.git
   ```
   
   * Make sure your operating systems MIDI interface is configured properly.
