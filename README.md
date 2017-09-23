@@ -30,7 +30,7 @@ Spectrotune offers adjustable options to help improve pitch detection, including
 ## Install and Basic Usage (macOS Standalone Application):
 
   Spectrotune is now available in a standalone application for macOS which you can download 
-  at http://github.com/corbanbrook/spectrotune/downloads
+  from [Downloads/Releases](http://github.com/corbanbrook/spectrotune/downloads)
 
   * Open DMG file.
 
