@@ -27,9 +27,9 @@ Spectrotune offers adjustable options to help improve pitch detection, including
   * MIDI octave channel segmenting - route each octave to its own MIDI channel.
 
 
-## Install and Basic Usage (Max OS X Standalone Application):
+## Install and Basic Usage (macOS Standalone Application):
 
-  Spectrotune is now available in a standalone application for Mac OSX which you can download 
+  Spectrotune is now available in a standalone application for macOS which you can download 
   at http://github.com/corbanbrook/spectrotune/downloads
 
   * Open DMG file.
@@ -43,7 +43,7 @@ Spectrotune offers adjustable options to help improve pitch detection, including
 
   * Record with MIDI sequencer.
 
-  Currently only exported as an application for Max OS X as I dont have any other platforms to
+  Currently only exported as an application for macOS as I dont have any other platforms to
   test on. If you want a standalone application for Windows or Linux please send me a request or 
   install processing and export the application yourself.
 
