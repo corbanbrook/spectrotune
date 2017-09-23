@@ -1,7 +1,6 @@
-                                  
-                                  Spectrotune
+# Spectrotune
 
-Spectrotune is a Processing application ( http://www.processing.org ) which scans a
+Spectrotune is a [Processing](http://www.processing.org) application which scans a
 polyphonic audio source (in wav, mp3, etc formats), performs pitch detection and
 outputs to MIDI.
 
@@ -28,7 +27,7 @@ Spectrotune offers adjustable options to help improve pitch detection, including
   * MIDI octave channel segmenting - route each octave to its own MIDI channel.
 
 
-Install and Basic Usage (Max OS X Standalone Application):
+## Install and Basic Usage (Max OS X Standalone Application):
 
   Spectrotune is now available in a standalone application for Mac OSX which you can download 
   at http://github.com/corbanbrook/spectrotune/downloads
@@ -52,19 +51,21 @@ Install and Basic Usage (Max OS X Standalone Application):
   processing and the required libraries.
 
 
-Processing Install (all platforms):
+## Processing Install (all platforms):
 
-  * Install processing ( http://www.processing.org )
+  * Install [processing](http://www.processing.org)
   
-  * Install rwmidi ( http://ruinwesen.com/support-files/rwmidi-0.1c.zip ) 
+  * Install [rwmidi](http://ruinwesen.com/support-files/rwmidi-0.1c.zip) 
 
-  * Install ControlP5 ( http://www.sojamo.de/libraries/controlP5/ )
+  * Install [ControlP5](http://www.sojamo.de/libraries/controlP5/)
 
   * Clone Spectrotune and place inside your Processing Sketchbook directory
   
+  ```
     cd ~/Documents/Processing (this is where I keep mine)
     git clone git://github.com/corbanbrook/spectrotune.git
-    
+  ```
+  
   * Make sure your operating systems MIDI interface is configured properly.
 
   * Put audio files (wav, mp3, etc) you wish to open in the 'music' folder within the route of the sketch.
@@ -79,30 +80,15 @@ Processing Install (all platforms):
   the input and pass on to any soft synth, or hardware synth.
 
 
-Keyboard Commands:
-
-  0-7    Octave filter: toggle octaves 0 to 7 On/Off
-  
-  p      Pitch Class Profile (PCP) toggle On/Off
-
-  e      Linear EQ toggle On/Off
-
-  h      Harmonic Filter toggle On/Off
-
-  m      Mute audio toggle On/Off
-
-  n      MIDI output toggle On/Off
-
-  SPACE  Pause/Play toggle
-
-  RIGHT  Peak Threshold Increase/decrease
-  /LEFT 
-
-  ESC    Quit
-
-
-@corban                                                    weare.buildingsky.net
-________________________________________________________________________________
-
-       Copyright (c) 2009 Corban Brook, released under the MIT license
-                                                                                  
+## Keyboard Commands:
+| Command | Result |
+|-------|---------------------------------------------|
+| 0-7   | Octave filter: toggle octaves 0 to 7 On/Off |
+| p     | Pitch Class Profile (PCP) toggle On/Off     |
+| e     | Linear EQ toggle On/Off                     |
+| h     | Harmonic Filter toggle On/Off               |
+| m     | Mute audio toggle On/Off                    |
+| n     | MIDI output toggle On/Off                   |
+| SPACE | Pause/Play toggle                           |
+| RIGHT/LEFT | Peak Threshold Increase/decrease       |
+| ESC   | Quit                                        |
